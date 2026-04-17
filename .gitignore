@@ -1,1 +1,73 @@
-.vs
+## --- Visual Studio & .NET GitIgnore ---
+
+# Fichiers de build et sorties (Binaires)
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa]rm/
+[Aa]rm64/
+
+# Fichiers de solution Visual Studio
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+
+# Cache de restauration des packages NuGet
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Packages NuGet (si vous n'utilisez pas la restauration automatique)
+*.nupkg
+**/packages/*
+!**/packages/build/
+
+# Fichiers générés par MSBuild
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.cache
+*.dbmdl
+*.jsproj.user
+*.dbproj.user
+
+# Outils de profilage et de diagnostic
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+# Dossiers d'outils de test
+TestResults/
+[Tt]est[Rr]esult*/
+*.trx
+
+# Fichiers de base de données (SQL Server Express / LocalDB)
+*.mdf
+*.ldf
+*.sdf
+
+# Fichiers de configuration spécifiques à l'utilisateur (Secrets & Local)
+appsettings.Development.json
+appsettings.Local.json
+*.pfx
+*.publishsettings
+
+# Dossiers d'outils .NET Core / .NET 5+
+.vsconfig
+.templateengine/
+
+# Azure Functions & Serverless
+.python_packages/
+.funcignore
+bin/
+obj/
+
+# Fichiers système (OS)
+.DS_Store
+Thumbs.db 
