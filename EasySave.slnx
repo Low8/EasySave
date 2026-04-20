@@ -3,4 +3,7 @@
     <File Path=".gitignore" />
   </Folder>
   <Project Path="EasySave/EasySave.csproj" />
+  <Project Path="EasySave.Models/EasySave.Models.csproj" />
+  <Project Path="EasySave.Service/EasySave.Services.csproj" />
+  <Project Path="EasyLog/EasyLog.csproj" />
 </Solution>
