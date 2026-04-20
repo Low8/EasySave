@@ -1,7 +1,6 @@
 # 🗂️ EasySave — Branch Assignments
 
 ## 🔀 Workflow
-
 ```
 master
 └── develop
@@ -33,18 +32,69 @@ Chaque feature terminée → PR vers `develop` → review par 1 coéquipier → 
 
 ---
 
-## 🔧 Commandes Git utiles
+## 👤 Ethan — Backup Engine
 
-**Démarrer une sous-branche**
-```bash
-git checkout feature/facade-observers-main
-git checkout -b feature/facade-observers/backup-service
-git push -u origin feature/facade-observers/backup-service
-```
+**Branche principale** : `feature/backup-engine-main`
 
-**Mettre à jour sa branche depuis develop**
+| Sous-branche | Contenu |
+|---|---|
+| `feature/backup-engine/strategies` | `BackupJob`, `FullBackupStrategy`, `DifferentialBackupStrategy`, `IBackupStrategy` |
+| `feature/backup-engine/easylog` | `EasyLogger`, `LogEntry` |
+
+**Fichiers** :
+- `EasySave.Services/BackupJob.cs`
+- `EasySave.Services/Strategies/IBackupStrategy.cs`
+- `EasySave.Services/Strategies/FullBackupStrategy.cs`
+- `EasySave.Services/Strategies/DifferentialBackupStrategy.cs`
+- `EasyLog/EasyLogger.cs`
+- `EasyLog/LogEntry.cs`
+
+---
+
+## 👤 Louison — Console Layer
+
+**Branche principale** : `feature/console-layer-main`
+
+| Sous-branche | Contenu |
+|---|---|
+| `feature/console-layer/cli-parser` | `CommandLineParser`, `CommandLineRunner` |
+| `feature/console-layer/interactive-shell` | `InteractiveShell`, `ConsoleObserver`, `Program.cs` |
+
+**Fichiers** :
+- `EasySave/Program.cs`
+- `EasySave/CommandLineParser.cs`
+- `EasySave/CommandLineRunner.cs`
+- `EasySave/InteractiveShell.cs`
+- `EasySave/ConsoleObserver.cs`
+- `EasySave/Resources/Messages.resx`
+- `EasySave/Resources/Messages.fr.resx`
+
+---
+
+## 👤 Wilfried — Unit Tests
+
+**Branche principale** : `feature/unit-tests-main`
+
+| Sous-branche | Contenu |
+|---|---|
+| `feature/unit-tests/service-tests` | Tests `BackupService`, `IStateObserver` wiring |
+| `feature/unit-tests/parser-tests` | Tests `CommandLineParser`, `LocalizationService` |
+
+**Fichiers** :
+- `EasySave.Tests/BackupServiceTests.cs`
+- `EasySave.Tests/CommandLineParserTests.cs`
+- `EasySave.Tests/LocalizationServiceTests.cs`
+- `EasySave.Tests/DifferentialStrategyTests.cs`
+
+⚠️ **Wilfried** : attends qu'Ewan merge `IStateObserver` et qu'Ethan merge `IBackupStrategy` sur `develop` avant de coder les tests — utilise des mocks (`FakeRepository`, `SpyObserver`) en attendant.
+
+---
+
+## 🔁 Commandes utiles
+
+**Démarrer sa journée**
 ```bash
-git checkout feature/[branche]
+git checkout feature/[ta-branche]
 git pull origin develop
 ```
 
