@@ -4,7 +4,7 @@ public class BackupState
 {
     public string Name { get; set; } = string.Empty;
     public DateTime LastActionTime { get; set; }
-    public string Status { get; set; } = string.Empty;
+    public BackupStatus Status { get; set; }
     public int TotalFiles { get; set; }
     public long TotalSize { get; set; }
     public int RemainingFiles { get; set; }
