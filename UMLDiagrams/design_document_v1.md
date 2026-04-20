@@ -194,9 +194,29 @@ classDiagram
     BackupService --> EasyLogger : logs
 
     %% ─────────────────────────────────────────
+    %% PACKAGE: EasySave.Localization
+    %% ─────────────────────────────────────────
+    namespace EasySave_Localization {
+
+        class ILocalizationService {
+            <<interface>>
+            +Get(key string) string
+        }
+
+        class ResourceLocalizationService {
+            -string _culture
+            +ResourceLocalizationService(culture string)
+            +Get(key string) string
+        }
+    }
+
+    ResourceLocalizationService ..|> ILocalizationService : implements
+
+    %% ─────────────────────────────────────────
     %% PACKAGE: EasySave (Console App)
     %% ─────────────────────────────────────────
     namespace EasySave_Console {
+
         class Program {
             +Main(args string[]) void
         }
@@ -205,14 +225,38 @@ classDiagram
             +Parse(args string[]) IEnumerable~int~
         }
 
+        class CommandLineRunner {
+            -BackupService _service
+            -CommandLineParser _parser
+            +Run(args string[]) Task
+        }
+
+        class InteractiveShell {
+            -BackupService _service
+            -ILocalizationService _loc
+            +Run() void
+        }
+
         class ConsoleObserver {
+            -ILocalizationService _loc
             +Update(state BackupState) void
         }
     }
 
     ConsoleObserver ..|> IStateObserver : implements
-    Program --> CommandLineParser : uses
-    Program --> BackupService : calls
+
+    Program --> BackupService : creates
+    Program --> CommandLineRunner : uses
+    Program --> InteractiveShell : uses
+    Program --> ResourceLocalizationService : creates
+
+    CommandLineRunner --> BackupService : uses
+    CommandLineRunner --> CommandLineParser : uses
+
+    InteractiveShell --> BackupService : uses
+    InteractiveShell --> ILocalizationService : uses
+
+    ConsoleObserver --> ILocalizationService : uses
 ```
 
 ---
