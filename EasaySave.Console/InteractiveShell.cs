@@ -39,13 +39,13 @@ public class InteractiveShell
     private void ShowMenu()
     {
         Console.WriteLine("==== " + _loc.Get("menu_title") + " ====");
-        Console.WriteLine(_loc.Get("menu_list"));
-        Console.WriteLine(_loc.Get("menu_create"));
-        Console.WriteLine(_loc.Get("menu_edit"));
-        Console.WriteLine(_loc.Get("menu_delete"));
-        Console.WriteLine(_loc.Get("menu_run"));
-        Console.WriteLine(_loc.Get("menu_run_all"));
-        Console.WriteLine(_loc.Get("menu_quit"));
+        Console.WriteLine("1) " + _loc.Get("menu_list"));
+        Console.WriteLine("2) " + _loc.Get("menu_create"));
+        Console.WriteLine("3) " + _loc.Get("menu_edit"));
+        Console.WriteLine("4) " + _loc.Get("menu_delete"));
+        Console.WriteLine("5) " + _loc.Get("menu_run"));
+        Console.WriteLine("6) " + _loc.Get("menu_run_all"));
+        Console.WriteLine("q) " + _loc.Get("menu_quit"));
     }
 
     private void ListJobs()
