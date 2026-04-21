@@ -1,0 +1,128 @@
+{
+  "format": 1,
+  "restore": {
+    "/Users/teo/RiderProjects/EasySave/EasySave/EasySave.csproj": {}
+  },
+  "projects": {
+    "/Users/teo/RiderProjects/EasySave/EasyLog/EasyLog.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/teo/RiderProjects/EasySave/EasyLog/EasyLog.csproj",
+        "projectName": "EasyLog",
+        "projectPath": "/Users/teo/RiderProjects/EasySave/EasyLog/EasyLog.csproj",
+        "packagesPath": "/Users/teo/.nuget/packages/",
+        "outputPath": "/Users/teo/RiderProjects/EasySave/EasyLog/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/teo/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/Users/teo/.dotnet/sdk/8.0.420/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/teo/RiderProjects/EasySave/EasySave/EasySave.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/teo/RiderProjects/EasySave/EasySave/EasySave.csproj",
+        "projectName": "EasySave",
+        "projectPath": "/Users/teo/RiderProjects/EasySave/EasySave/EasySave.csproj",
+        "packagesPath": "/Users/teo/.nuget/packages/",
+        "outputPath": "/Users/teo/RiderProjects/EasySave/EasySave/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/teo/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "/Users/teo/RiderProjects/EasySave/EasyLog/EasyLog.csproj": {
+                "projectPath": "/Users/teo/RiderProjects/EasySave/EasyLog/EasyLog.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/Users/teo/.dotnet/sdk/8.0.420/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

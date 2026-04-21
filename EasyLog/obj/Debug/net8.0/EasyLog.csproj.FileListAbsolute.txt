@@ -1,0 +1,11 @@
+/Users/teo/RiderProjects/EasySave/EasyLog/obj/Debug/net8.0/EasyLog.GeneratedMSBuildEditorConfig.editorconfig
+/Users/teo/RiderProjects/EasySave/EasyLog/obj/Debug/net8.0/EasyLog.AssemblyInfoInputs.cache
+/Users/teo/RiderProjects/EasySave/EasyLog/obj/Debug/net8.0/EasyLog.AssemblyInfo.cs
+/Users/teo/RiderProjects/EasySave/EasyLog/obj/Debug/net8.0/EasyLog.csproj.CoreCompileInputs.cache
+/Users/teo/RiderProjects/EasySave/EasyLog/bin/Debug/net8.0/EasyLog.deps.json
+/Users/teo/RiderProjects/EasySave/EasyLog/bin/Debug/net8.0/EasyLog.dll
+/Users/teo/RiderProjects/EasySave/EasyLog/bin/Debug/net8.0/EasyLog.pdb
+/Users/teo/RiderProjects/EasySave/EasyLog/obj/Debug/net8.0/EasyLog.dll
+/Users/teo/RiderProjects/EasySave/EasyLog/obj/Debug/net8.0/refint/EasyLog.dll
+/Users/teo/RiderProjects/EasySave/EasyLog/obj/Debug/net8.0/EasyLog.pdb
+/Users/teo/RiderProjects/EasySave/EasyLog/obj/Debug/net8.0/ref/EasyLog.dll

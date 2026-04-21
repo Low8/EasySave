@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasySave", "EasySave\EasySave.csproj", "{38B0DB16-6ECF-4DE0-847B-D840A946B920}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyLog", "EasyLog\EasyLog.csproj", "{6D1F869D-DF2E-48CC-9231-52E0F1C0CCB2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{38B0DB16-6ECF-4DE0-847B-D840A946B920}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38B0DB16-6ECF-4DE0-847B-D840A946B920}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38B0DB16-6ECF-4DE0-847B-D840A946B920}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38B0DB16-6ECF-4DE0-847B-D840A946B920}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D1F869D-DF2E-48CC-9231-52E0F1C0CCB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D1F869D-DF2E-48CC-9231-52E0F1C0CCB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D1F869D-DF2E-48CC-9231-52E0F1C0CCB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D1F869D-DF2E-48CC-9231-52E0F1C0CCB2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
