@@ -1,17 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AssemblyName>EasySave</AssemblyName>
+		<PublishSingleFile>true</PublishSingleFile>
+		<SelfContained>true</SelfContained>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\EasyLog\EasyLog.csproj" />
-    <ProjectReference Include="..\EasySave.Localization\EasySave.Localization.csproj" />
-    <ProjectReference Include="..\EasySave.Models\EasySave.Models.csproj" />
-    <ProjectReference Include="..\EasySave.Services\EasySave.Services.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\EasyLog\EasyLog.csproj" />
+		<ProjectReference Include="..\EasySave.Localization\EasySave.Localization.csproj" />
+		<ProjectReference Include="..\EasySave.Models\EasySave.Models.csproj" />
+		<ProjectReference Include="..\EasySave.Services\EasySave.Services.csproj" />
+	</ItemGroup>
 
 </Project>
