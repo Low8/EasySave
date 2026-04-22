@@ -18,8 +18,24 @@ public class EasyLogger
         lock (_lock)
         {
             string path = GetDailyFilePath();
-            string json = JsonSerializer.Serialize(entry);
-            File.AppendAllText(path, json + Environment.NewLine);
+            List<LogEntry> entries = ReadEntries(path);
+            entries.Add(entry);
+            File.WriteAllText(path, JsonSerializer.Serialize(entries, new JsonSerializerOptions { WriteIndented = true }));
+        }
+    }
+
+    private static List<LogEntry> ReadEntries(string path)
+    {
+        if (!File.Exists(path))
+            return [];
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<LogEntry>>(File.ReadAllText(path)) ?? [];
+        }
+        catch (JsonException)
+        {
+            return [];
         }
     }
 
