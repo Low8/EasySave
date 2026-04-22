@@ -30,20 +30,22 @@ public class BackupJob
 
             var sw = System.Diagnostics.Stopwatch.StartNew();
             bool success;
+            bool copied;
             try
             {
-                _strategy.Execute(sourceFile, destFile);
+                copied = _strategy.Execute(sourceFile, destFile);
                 success = true;
             }
             catch
             {
                 success = false;
+                copied = false;
             }
             sw.Stop();
 
             var fileSize = success ? new FileInfo(destFile).Length : 0;
 
-            yield return new BackupResult(sourceFile, destFile, fileSize, sw.ElapsedMilliseconds, success);
+            yield return new BackupResult(sourceFile, destFile, fileSize, sw.ElapsedMilliseconds, success, Skipped: !copied);
         }
     }
 }

@@ -5,5 +5,6 @@ public record BackupResult(
     string DestPath,
     long FileSize,
     long TransferMs,
-    bool Success
+    bool Success,
+    bool Skipped = false
 );

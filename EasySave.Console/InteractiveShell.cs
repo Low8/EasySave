@@ -96,9 +96,23 @@ public class InteractiveShell
 
             Console.Write($"{_loc.Get("prompt_name")} ({job.Name}): ");
             var name = Console.ReadLine();
-
             if (!string.IsNullOrWhiteSpace(name))
                 job.Name = name;
+
+            Console.Write($"{_loc.Get("prompt_source")} ({job.SourceDir}): ");
+            var source = Console.ReadLine();
+            if (!string.IsNullOrWhiteSpace(source))
+                job.SourceDir = source;
+
+            Console.Write($"{_loc.Get("prompt_target")} ({job.TargetDir}): ");
+            var target = Console.ReadLine();
+            if (!string.IsNullOrWhiteSpace(target))
+                job.TargetDir = target;
+
+            Console.Write($"{_loc.Get("prompt_type")} ({job.Type}): ");
+            var typeInput = Console.ReadLine();
+            if (!string.IsNullOrWhiteSpace(typeInput))
+                job.Type = typeInput == "2" ? BackupType.Differential : BackupType.Full;
 
             _service.UpdateJob(index, job);
         }

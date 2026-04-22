@@ -103,7 +103,8 @@ public class BackupService : IStateSubject
                 RemainingSize = remainingSize,
                 Progress = progress,
                 CurrentSource = result.SourcePath,
-                CurrentDest = result.DestPath
+                CurrentDest = result.DestPath,
+                LastFileSkipped = result.Skipped  
             });
         }
 
