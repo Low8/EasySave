@@ -2,7 +2,6 @@
   <Folder Name="/Éléments de solution/">
     <File Path=".gitignore" />
   </Folder>
-  <Project Path="EasySave/EasySave.csproj" />
   <Project Path="EasySave.Models/EasySave.Models.csproj" />
   <Project Path="EasySave.Services/EasySave.Services.csproj" />
   <Project Path="EasySave.Localization/EasySave.Localization.csproj" />
