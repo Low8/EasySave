@@ -12,4 +12,5 @@ public class BackupState
     public float Progress { get; set; }
     public string CurrentSource { get; set; } = string.Empty;
     public string CurrentDest { get; set; } = string.Empty;
+    public bool LastFileSkipped { get; set; }
 }

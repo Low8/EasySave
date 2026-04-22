@@ -14,6 +14,14 @@ public class ConsoleObserver : IStateObserver
 
     public void Update(BackupState state)
     {
-        Console.WriteLine($"[{state.Name}] {state.Progress}% - {state.Status}");
+        if (state.Status == BackupStatus.Running)
+        {
+            var action = state.LastFileSkipped ? "SKIP" : "COPY";
+            Console.WriteLine($"[{state.Name}] {state.Progress:F1}% - {action} {Path.GetFileName(state.CurrentSource)}");
+        }
+        else
+        {
+            Console.WriteLine($"[{state.Name}] {state.Status}");
+        }
     }
 }
