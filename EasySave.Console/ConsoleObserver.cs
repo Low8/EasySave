@@ -1,6 +1,5 @@
-﻿using EasySave.Services;
+﻿using EasySave.Localization;
 using EasySave.Models;
-using EasySave.Localization;
 
 namespace EasySave.ConsoleApp;
 

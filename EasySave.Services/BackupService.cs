@@ -1,5 +1,6 @@
 using EasySave.Models;
 using EasySave.Services.Interfaces;
+using EasySave.Services.Repositories;
 using EasyLog;
 
 namespace EasySave.Services;
@@ -11,9 +12,9 @@ public class BackupService : IStateSubject
     private readonly EasyLogger _logger;
     private readonly List<BackupJobConfig> _jobs = [];
 
-    public BackupService(IBackupJobRepository repository, EasyLogger logger)
+    public BackupService(string configPath, EasyLogger logger)
     {
-        _repository = repository;
+        _repository = new JsonBackupJobRepository(configPath);
         _logger = logger;
     }
 
@@ -33,6 +34,22 @@ public class BackupService : IStateSubject
         if (_jobs.Count >= 5)
             throw new InvalidOperationException("Maximum 5 jobs allowed");
         _jobs.Add(config);
+        _repository.Save(_jobs);
+    }
+
+    public void RemoveJob(int index)
+    {
+        if (index < 0 || index >= _jobs.Count)
+            throw new ArgumentOutOfRangeException(nameof(index));
+        _jobs.RemoveAt(index);
+        _repository.Save(_jobs);
+    }
+
+    public void UpdateJob(int index, BackupJobConfig updated)
+    {
+        if (index < 0 || index >= _jobs.Count)
+            throw new ArgumentOutOfRangeException(nameof(index));
+        _jobs[index] = updated;
         _repository.Save(_jobs);
     }
 

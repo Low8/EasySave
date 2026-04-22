@@ -84,49 +84,90 @@ public class InteractiveShell
 
     private void EditJob()
     {
-        ListJobs();
+        try
+        {
+            ListJobs();
 
-        Console.Write(_loc.Get("prompt_select"));
-        int index = int.Parse(Console.ReadLine()) - 1;
+            Console.Write(_loc.Get("prompt_select"));
+            int index = int.Parse(Console.ReadLine()) - 1;
 
-        var jobs = _service.GetJobs().ToList();
-        var job = jobs[index];
+            var jobs = _service.GetJobs().ToList();
+            var job = jobs[index];
 
-        Console.Write($"{_loc.Get("prompt_name")} ({job.Name}): ");
-        var name = Console.ReadLine();
+            Console.Write($"{_loc.Get("prompt_name")} ({job.Name}): ");
+            var name = Console.ReadLine();
 
-        if (!string.IsNullOrWhiteSpace(name))
-            job.Name = name;
+            if (!string.IsNullOrWhiteSpace(name))
+                job.Name = name;
 
-        _service.SaveJobs(jobs);
+            _service.UpdateJob(index, job);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            Console.WriteLine(_loc.Get("error_invalid_index"));
+        }
+        catch (FormatException)
+        {
+            Console.WriteLine(_loc.Get("error_invalid_input"));
+        }
     }
 
     private void DeleteJob()
     {
-        ListJobs();
+        try
+        {
+            ListJobs();
 
-        Console.Write(_loc.Get("prompt_select"));
-        int index = int.Parse(Console.ReadLine()) - 1;
+            Console.Write(_loc.Get("prompt_select"));
+            int index = int.Parse(Console.ReadLine()) - 1;
 
-        var jobs = _service.GetJobs().ToList();
-        jobs.RemoveAt(index);
-
-        _service.SaveJobs(jobs);
+            _service.RemoveJob(index);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            Console.WriteLine(_loc.Get("error_invalid_index"));
+        }
+        catch (FormatException)
+        {
+            Console.WriteLine(_loc.Get("error_invalid_input"));
+        }
     }
 
     private async Task RunJob()
     {
-        ListJobs();
+        try
+        {
+            ListJobs();
 
-        Console.Write(_loc.Get("prompt_select"));
-        int index = int.Parse(Console.ReadLine()) - 1;
+            Console.Write(_loc.Get("prompt_select"));
+            int index = int.Parse(Console.ReadLine()) - 1;
 
-        await _service.RunJob(index);
+            await _service.RunJob(index);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            Console.WriteLine(_loc.Get("error_invalid_index"));
+        }
+        catch (FormatException)
+        {
+            Console.WriteLine(_loc.Get("error_invalid_input"));
+        }
     }
 
     private async Task RunAll()
     {
-        var count = _service.GetJobs().Count();
-        await _service.RunRange(Enumerable.Range(0, count));
+        try
+        {
+            var count = _service.GetJobs().Count();
+            await _service.RunRange(Enumerable.Range(0, count));
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            Console.WriteLine(_loc.Get("error_invalid_index"));
+        }
+        catch (FormatException)
+        {
+            Console.WriteLine(_loc.Get("error_invalid_input"));
+        }
     }
 }

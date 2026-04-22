@@ -11,7 +11,9 @@ public class JsonBackupJobRepository : IBackupJobRepository
     public JsonBackupJobRepository(string configPath)
     {
         _configPath = configPath;
-        Directory.CreateDirectory(Path.GetDirectoryName(configPath)!);
+        var dir = Path.GetDirectoryName(configPath);
+        if (!string.IsNullOrEmpty(dir))
+            Directory.CreateDirectory(dir);
     }
 
     public IEnumerable<BackupJobConfig> GetAll()

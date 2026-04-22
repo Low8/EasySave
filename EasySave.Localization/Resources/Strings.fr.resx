@@ -159,4 +159,10 @@
   <data name="prompt_select" xml:space="preserve">
     <value>Sélectionner un job :</value>
   </data>
+  <data name="error_invalid_index" xml:space="preserve">
+    <value>Numéro de job invalide.</value>
+  </data>
+  <data name="error_invalid_input" xml:space="preserve">
+    <value>Saisie invalide.</value>
+  </data>
 </root>
