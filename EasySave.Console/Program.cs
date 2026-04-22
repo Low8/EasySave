@@ -17,7 +17,7 @@ class Program
 
         ILocalizationService loc = new ResourceLocalizationService(culture);
         var solutionRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\..\..\"));
-        Console.WriteLine($"[DEBUG] solutionRoot = {solutionRoot}");
+       
 
         var logDir = Path.Combine(solutionRoot, "logs");
         var logger = new EasyLogger(logDir);
@@ -27,6 +27,11 @@ class Program
 
         var observer = new ConsoleObserver(loc);
         service.Attach(observer);
+
+        var statePath = Path.Combine(solutionRoot, "state.json");
+       
+        var stateWriter = new StateFileWriter(statePath);
+        service.Attach(stateWriter);
 
         if (args.Length > 0)
         {

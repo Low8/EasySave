@@ -60,3 +60,6 @@ obj/
 .DS_Store
 Thumbs.db 
 .claude/
+
+config.json
+logs/
