@@ -16,8 +16,10 @@ class Program
         string culture = lang == "2" ? "fr" : "en";
 
         ILocalizationService loc = new ResourceLocalizationService(culture);
-        var solutionRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\..\..\"));
-       
+        var solutionRoot = Path.GetFullPath(File.Exists(Path.Combine(AppContext.BaseDirectory, @"..\..\..\..\EasySave.sln"))
+        ? Path.Combine(AppContext.BaseDirectory, @"..\..\..\..\")
+        : Path.Combine(AppContext.BaseDirectory, @"..\"));
+
 
         var logDir = Path.Combine(solutionRoot, "logs");
         var logger = new EasyLogger(logDir);
