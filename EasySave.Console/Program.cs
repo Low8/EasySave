@@ -17,9 +17,8 @@ class Program
 
         ILocalizationService loc = new ResourceLocalizationService(culture);
 
-        var repository = new JsonBackupJobRepository("config.json");
         var logger = new EasyLogger("logs");
-        var service = new BackupService(repository, logger);
+        var service = new BackupService("config.json", logger);
 
         var observer = new ConsoleObserver(loc);
         service.Attach(observer);
