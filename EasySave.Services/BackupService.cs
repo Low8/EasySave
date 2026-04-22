@@ -16,6 +16,7 @@ public class BackupService : IStateSubject
     {
         _repository = new JsonBackupJobRepository(configPath);
         _logger = logger;
+        LoadJobs();
     }
 
     public void Attach(IStateObserver observer) => _observers.Add(observer);

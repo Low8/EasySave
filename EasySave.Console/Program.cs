@@ -16,9 +16,14 @@ class Program
         string culture = lang == "2" ? "fr" : "en";
 
         ILocalizationService loc = new ResourceLocalizationService(culture);
+        var solutionRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\..\..\"));
+        Console.WriteLine($"[DEBUG] solutionRoot = {solutionRoot}");
 
-        var logger = new EasyLogger("logs");
-        var service = new BackupService("config.json", logger);
+        var logDir = Path.Combine(solutionRoot, "logs");
+        var logger = new EasyLogger(logDir);
+
+        var configPath = Path.Combine(solutionRoot, "config.json");
+        var service = new BackupService(configPath, logger);
 
         var observer = new ConsoleObserver(loc);
         service.Attach(observer);
