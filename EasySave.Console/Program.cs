@@ -15,6 +15,13 @@ class Program
         var lang = Console.ReadLine();
         string culture = lang == "2" ? "fr" : "en";
 
+        Console.WriteLine("Choose log format / Choisir le format des logs:");
+        Console.WriteLine("1. JSON");
+        Console.WriteLine("2. XML");
+        
+        var formatInput = Console.ReadLine();
+        LogFormat selectedFormat = formatInput == "2" ? LogFormat.XML : LogFormat.JSON;
+
         ILocalizationService loc = new ResourceLocalizationService(culture);
         var solutionRoot = Path.GetFullPath(File.Exists(Path.Combine(AppContext.BaseDirectory, @"..\..\..\..\EasySave.sln"))
         ? Path.Combine(AppContext.BaseDirectory, @"..\..\..\..\")
@@ -22,7 +29,8 @@ class Program
 
 
         var logDir = Path.Combine(solutionRoot, "logs");
-        var logger = new EasyLogger(logDir);
+
+        var logger = new EasyLogger(logDir, selectedFormat);
 
         var configPath = Path.Combine(solutionRoot, "config.json");
         var service = new BackupService(configPath, logger);
