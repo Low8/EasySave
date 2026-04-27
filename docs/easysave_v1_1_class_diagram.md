@@ -1,15 +1,8 @@
 # EasySave v1.1 — Class Diagram
 
-> Delta from v1.0: `ILogFormatter`, `JsonLogFormatter`, `XmlLogFormatter` added to `EasyLog`.
-> `AppSettings`, `LogFormat`, `IAppSettingsRepository`, `JsonAppSettingsRepository` added.
-> `EasyLogger` and `InteractiveShell` modified. All other classes unchanged.
-
 ```mermaid
 classDiagram
 
-    %% ─────────────────────────────────────────
-    %% PACKAGE: EasyLog
-    %% ─────────────────────────────────────────
     namespace EasyLog {
         class LogEntry {
             +DateTime Timestamp
@@ -22,33 +15,28 @@ classDiagram
         class ILogFormatter {
             <<interface>>
             +FileExtension string
-            +Format(List~LogEntry~ entries) string
+            +Format(List~LogEntry~) string
         }
         class JsonLogFormatter {
             +FileExtension string
-            +Format(List~LogEntry~ entries) string
+            +Format(List~LogEntry~) string
         }
         class XmlLogFormatter {
             +FileExtension string
-            +Format(List~LogEntry~ entries) string
+            +Format(List~LogEntry~) string
         }
         class EasyLogger {
             -string _logDirectory
             -ILogFormatter _formatter
-            -object _lock
-            +EasyLogger(string logDirectory, ILogFormatter formatter)
-            +Log(LogEntry entry) void
+            +Log(LogEntry) void
         }
     }
 
     JsonLogFormatter ..|> ILogFormatter : implements
     XmlLogFormatter ..|> ILogFormatter : implements
-    EasyLogger --> ILogFormatter : injects (_formatter)
+    EasyLogger --> ILogFormatter : injects
     EasyLogger ..> LogEntry : uses
 
-    %% ─────────────────────────────────────────
-    %% PACKAGE: EasySave.Models
-    %% ─────────────────────────────────────────
     namespace EasySave_Models {
         class BackupType {
             <<enumeration>>
@@ -59,7 +47,6 @@ classDiagram
             <<enumeration>>
             Idle
             Running
-            Paused
             Completed
             Error
         }
@@ -73,58 +60,49 @@ classDiagram
             +string SourceDir
             +string TargetDir
             +BackupType Type
-            +bool IsActive
         }
         class BackupState {
-            +string Name
-            +DateTime LastActionTime
             +BackupStatus Status
             +int TotalFiles
-            +long TotalSize
             +int RemainingFiles
-            +long RemainingSize
             +float Progress
             +string CurrentSource
             +string CurrentDest
-            +bool LastFileSkipped
         }
         class AppSettings {
             +LogFormat LogFormat
         }
         class IStateObserver {
             <<interface>>
-            +Update(BackupState state) void
+            +Update(BackupState) void
         }
     }
 
-    BackupJobConfig --> BackupType : uses
-    BackupState --> BackupStatus : uses
-    AppSettings --> LogFormat : uses
-    IStateObserver ..> BackupState : declares (Update param)
+    BackupJobConfig --> BackupType
+    BackupState --> BackupStatus
+    AppSettings --> LogFormat
+    IStateObserver ..> BackupState
 
-    %% ─────────────────────────────────────────
-    %% PACKAGE: EasySave.Services
-    %% ─────────────────────────────────────────
     namespace EasySave_Services {
         class IStateSubject {
             <<interface>>
-            +Attach(IStateObserver observer) void
-            +Detach(IStateObserver observer) void
-            +Notify(BackupState state) void
+            +Attach(IStateObserver) void
+            +Detach(IStateObserver) void
+            +Notify(BackupState) void
         }
         class IBackupStrategy {
             <<interface>>
-            +Execute(string source, string dest) bool
+            +Execute(string, string) bool
         }
         class IBackupJobRepository {
             <<interface>>
             +GetAll() IEnumerable~BackupJobConfig~
-            +Save(IEnumerable~BackupJobConfig~ jobs) void
+            +Save(IEnumerable~BackupJobConfig~) void
         }
         class IAppSettingsRepository {
             <<interface>>
             +Load() AppSettings
-            +Save(AppSettings settings) void
+            +Save(AppSettings) void
         }
         class BackupResult {
             <<record>>
@@ -132,13 +110,12 @@ classDiagram
             +string DestPath
             +long FileSize
             +long TransferMs
-            +bool Success
             +bool Skipped
         }
         class BackupJob {
             -BackupJobConfig _config
             -IBackupStrategy _strategy
-            +Execute(CancellationToken ct) IAsyncEnumerable~BackupResult~
+            +Execute(CancellationToken) IAsyncEnumerable~BackupResult~
         }
         class BackupService {
             <<Facade>>
@@ -146,36 +123,26 @@ classDiagram
             -IBackupJobRepository _repository
             -EasyLogger _logger
             -List~BackupJobConfig~ _jobs
-            +Attach(IStateObserver observer) void
-            +Detach(IStateObserver observer) void
-            +Notify(BackupState state) void
-            +LoadJobs() void
-            +AddJob(BackupJobConfig config) void
-            +RemoveJob(int index) void
-            +GetJobs() IEnumerable~BackupJobConfig~
-            +RunJob(int index, CancellationToken ct) Task
-            +RunRange(IEnumerable~int~ indices, CancellationToken ct) Task
+            +AddJob(BackupJobConfig) void
+            +RunJob(int, CancellationToken) Task
+            +RunRange(IEnumerable~int~, CancellationToken) Task
         }
         class StateFileWriter {
-            -string _statePath
-            -object _lock
-            +Update(BackupState state) void
+            +Update(BackupState) void
         }
         class FullBackupStrategy {
-            +Execute(string source, string dest) bool
+            +Execute(string, string) bool
         }
         class DifferentialBackupStrategy {
-            +Execute(string source, string dest) bool
+            +Execute(string, string) bool
         }
         class JsonBackupJobRepository {
-            -string _configPath
             +GetAll() IEnumerable~BackupJobConfig~
-            +Save(IEnumerable~BackupJobConfig~ jobs) void
+            +Save(IEnumerable~BackupJobConfig~) void
         }
         class JsonAppSettingsRepository {
-            -string _path
             +Load() AppSettings
-            +Save(AppSettings settings) void
+            +Save(AppSettings) void
         }
     }
 
@@ -186,125 +153,78 @@ classDiagram
     JsonBackupJobRepository ..|> IBackupJobRepository : implements
     JsonAppSettingsRepository ..|> IAppSettingsRepository : implements
 
-    BackupService --> EasyLogger : injects (_logger)
-    BackupService --> IBackupJobRepository : has-field (_repository)
-    BackupService --> IStateObserver : has-field (_observers 0..*)
-    BackupService --> BackupJobConfig : has-field (_jobs 0..*)
-    BackupService ..> JsonBackupJobRepository : creates (new in ctor)
-    BackupService ..> FullBackupStrategy : creates (new in RunJob)
-    BackupService ..> DifferentialBackupStrategy : creates (new in RunJob)
-    BackupService ..> BackupJob : creates (new in RunJob)
-    BackupService ..> BackupState : creates (new per file + completion)
-    BackupService ..> LogEntry : creates (new per file result)
-    BackupService --> IStateObserver : notifies (Notify calls Update)
-    BackupService ..> BackupType : uses
-    BackupService ..> BackupStatus : uses
-
-    BackupJob --> BackupJobConfig : injects (_config)
-    BackupJob --> IBackupStrategy : injects (_strategy)
+    BackupService --> EasyLogger : injects
+    BackupService --> IBackupJobRepository : has-field
+    BackupService --> IStateObserver : has-field 0..*
+    BackupService ..> BackupJob : creates
+    BackupService ..> IBackupStrategy : creates
+    BackupJob --> BackupJobConfig : injects
+    BackupJob --> IBackupStrategy : injects
     BackupJob ..> BackupResult : yields
+    IAppSettingsRepository ..> AppSettings
 
-    IAppSettingsRepository ..> AppSettings : declares (Load/Save)
-
-    %% ─────────────────────────────────────────
-    %% PACKAGE: EasySave.Localization
-    %% ─────────────────────────────────────────
     namespace EasySave_Localization {
         class ILocalizationService {
             <<interface>>
-            +Get(string key) string
+            +Get(string) string
         }
         class ResourceLocalizationService {
-            -ResourceManager _resourceManager
-            -CultureInfo _culture
-            +Get(string key) string
+            +Get(string) string
         }
     }
 
     ResourceLocalizationService ..|> ILocalizationService : implements
 
-    %% ─────────────────────────────────────────
-    %% PACKAGE: EasySave.Console
-    %% ─────────────────────────────────────────
     namespace EasySave_Console {
         class ConsoleObserver {
-            -ILocalizationService _loc
-            +Update(BackupState state) void
+            +Update(BackupState) void
         }
         class CommandLineParser {
-            +Parse(string[] args) IEnumerable~int~
+            +Parse(string[]) IEnumerable~int~
         }
         class CommandLineRunner {
-            -BackupService _service
-            -CommandLineParser _parser
-            +Run(string[] args) Task
+            +Run(string[]) Task
         }
         class InteractiveShell {
-            -BackupService _service
-            -ILocalizationService _loc
             -IAppSettingsRepository _settingsRepo
             -AppSettings _appSettings
             +Run() Task
         }
         class Program {
             <<composition root>>
-            +Main(string[] args) Task
         }
     }
 
     ConsoleObserver ..|> IStateObserver : implements
-    ConsoleObserver --> ILocalizationService : injects (_loc)
-    ConsoleObserver ..> BackupState : depends-on (Update param)
-    ConsoleObserver ..> BackupStatus : uses
-
-    CommandLineRunner --> BackupService : injects (_service)
-    CommandLineRunner --> CommandLineParser : injects (_parser)
-
-    InteractiveShell --> BackupService : injects (_service)
-    InteractiveShell --> ILocalizationService : injects (_loc)
-    InteractiveShell --> IAppSettingsRepository : injects (_settingsRepo)
-    InteractiveShell --> AppSettings : has-field (_appSettings)
-    InteractiveShell ..> BackupJobConfig : creates + uses
-    InteractiveShell ..> BackupType : uses
-
-    Program ..> ResourceLocalizationService : creates
+    ConsoleObserver --> ILocalizationService : injects
+    CommandLineRunner --> BackupService : injects
+    CommandLineRunner --> CommandLineParser : injects
+    InteractiveShell --> BackupService : injects
+    InteractiveShell --> ILocalizationService : injects
+    InteractiveShell --> IAppSettingsRepository : injects
     Program ..> EasyLogger : creates
-    Program ..> JsonLogFormatter : creates (when LogFormat.Json)
-    Program ..> XmlLogFormatter : creates (when LogFormat.Xml)
+    Program ..> JsonLogFormatter : creates
+    Program ..> XmlLogFormatter : creates
     Program ..> JsonAppSettingsRepository : creates
-    Program ..> AppSettings : uses (loaded from repo)
     Program ..> BackupService : creates
-    Program ..> ConsoleObserver : creates
-    Program ..> StateFileWriter : creates
-    Program ..> CommandLineParser : creates (when args provided)
-    Program ..> CommandLineRunner : creates (when args provided)
-    Program ..> InteractiveShell : creates (when no args)
-    Program ..> BackupService : uses (Attach observers)
-    Program ..> ILogFormatter : uses (typed ref passed to EasyLogger)
+    Program ..> InteractiveShell : creates
+    Program ..> CommandLineRunner : creates
 ```
 
 ---
 
-## Delta from v1.0
+## Delta v1.0 → v1.1
 
-| Class | Status | Change |
+| Classe | Statut | Changement |
 |---|---|---|
-| `ILogFormatter` | **New** — `EasyLog` | Interface for log serialization |
-| `JsonLogFormatter` | **New** — `EasyLog` | JSON implementation of `ILogFormatter` |
-| `XmlLogFormatter` | **New** — `EasyLog` | XML implementation of `ILogFormatter` |
-| `LogFormat` | **New** — `EasySave.Models` | Enum `Json / Xml` |
-| `AppSettings` | **New** — `EasySave.Models` | Holds `LogFormat` preference |
-| `IAppSettingsRepository` | **New** — `EasySave.Services` | Persistence interface for settings |
-| `JsonAppSettingsRepository` | **New** — `EasySave.Services` | Reads/writes `settings.json` |
-| `EasyLogger` | **Modified** | Constructor now requires `ILogFormatter` |
-| `InteractiveShell` | **Modified** | Settings menu (option 7) added |
-| `Program` | **Modified** | Loads settings, resolves `ILogFormatter`, wires `IAppSettingsRepository` |
-| All other classes | **Unchanged** | — |
-
----
-
-## Key constraint: EasyLog.dll stays dependency-free
-
-`LogFormat` is in `EasySave.Models`, not in `EasyLog`.
-`EasyLogger` only knows `ILogFormatter` — it never sees `LogFormat`.
-The mapping `LogFormat → ILogFormatter` happens exclusively in `Program.cs`.
+| `ILogFormatter` | **Nouveau** — EasyLog | Interface de sérialisation des logs |
+| `JsonLogFormatter` | **Nouveau** — EasyLog | Implémentation JSON |
+| `XmlLogFormatter` | **Nouveau** — EasyLog | Implémentation XML |
+| `LogFormat` | **Nouveau** — Models | Enum `Json / Xml` |
+| `AppSettings` | **Nouveau** — Models | Contient `LogFormat` |
+| `IAppSettingsRepository` | **Nouveau** — Services | Interface de persistance des settings |
+| `JsonAppSettingsRepository` | **Nouveau** — Services | Lit/écrit `settings.json` |
+| `EasyLogger` | **Modifié** | Reçoit `ILogFormatter` en constructeur |
+| `InteractiveShell` | **Modifié** | Option 7 — Settings |
+| `Program` | **Modifié** | Charge les settings, résout `ILogFormatter` |
+| Tout le reste | Inchangé | — |
