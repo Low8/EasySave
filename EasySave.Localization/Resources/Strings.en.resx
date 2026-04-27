@@ -165,4 +165,19 @@
   <data name="error_invalid_input" xml:space="preserve">
     <value>Invalid input.</value>
   </data>
+  <data name="menu_settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="settings_current_format" xml:space="preserve">
+    <value>Current log format</value>
+  </data>
+  <data name="settings_choose_format" xml:space="preserve">
+    <value>Choose format (1=JSON, 2=XML):</value>
+  </data>
+  <data name="settings_format_saved" xml:space="preserve">
+    <value>Log format updated. Restart to apply.</value>
+  </data>
+  <data name="settings_invalid" xml:space="preserve">
+    <value>Invalid choice.</value>
+  </data>
 </root>
