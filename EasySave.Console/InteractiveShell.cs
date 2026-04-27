@@ -1,4 +1,5 @@
-﻿using EasySave.Services;
+using System.Text.Json;
+using EasySave.Services;
 using EasySave.Models;
 using EasySave.Localization;
 
@@ -8,11 +9,15 @@ public class InteractiveShell
 {
     private readonly BackupService _service;
     private readonly ILocalizationService _loc;
+    private readonly AppSettings _appSettings;
+    private readonly string _settingsPath;
 
-    public InteractiveShell(BackupService service, ILocalizationService loc)
+    public InteractiveShell(BackupService service, ILocalizationService loc, AppSettings appSettings, string settingsPath)
     {
         _service = service;
         _loc = loc;
+        _appSettings = appSettings;
+        _settingsPath = settingsPath;
     }
 
     public async Task Run()
@@ -30,6 +35,7 @@ public class InteractiveShell
                 case "4": DeleteJob(); break;
                 case "5": await RunJob(); break;
                 case "6": await RunAll(); break;
+                case "7": ShowSettings(); break;
                 case "q": return;
                 default: Console.WriteLine(_loc.Get("invalid")); break;
             }
@@ -45,6 +51,7 @@ public class InteractiveShell
         Console.WriteLine("4) " + _loc.Get("menu_delete"));
         Console.WriteLine("5) " + _loc.Get("menu_run"));
         Console.WriteLine("6) " + _loc.Get("menu_run_all"));
+        Console.WriteLine("7) " + _loc.Get("menu_settings"));
         Console.WriteLine("q) " + _loc.Get("menu_quit"));
     }
 
@@ -183,5 +190,32 @@ public class InteractiveShell
         {
             Console.WriteLine(_loc.Get("error_invalid_input"));
         }
+    }
+
+    private void ShowSettings()
+    {
+        Console.WriteLine("=== " + _loc.Get("menu_settings") + " ===");
+        Console.WriteLine(_loc.Get("settings_current_format") + ": " + _appSettings.LogFormat);
+        Console.WriteLine("1 - JSON");
+        Console.WriteLine("2 - XML");
+        Console.Write(_loc.Get("settings_choose_format"));
+        var input = Console.ReadLine();
+
+        LogFormat? format = input switch
+        {
+            "1" => LogFormat.Json,
+            "2" => LogFormat.Xml,
+            _ => null
+        };
+
+        if (format is null)
+        {
+            Console.WriteLine(_loc.Get("settings_invalid"));
+            return;
+        }
+
+        _appSettings.LogFormat = format.Value;
+        File.WriteAllText(_settingsPath, JsonSerializer.Serialize(_appSettings, new JsonSerializerOptions { WriteIndented = true }));
+        Console.WriteLine(_loc.Get("settings_format_saved"));
     }
 }

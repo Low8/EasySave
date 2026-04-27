@@ -185,5 +185,50 @@ namespace EasySave.Localization.Resources {
                 return ResourceManager.GetString("prompt_type", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Settings.
+        /// </summary>
+        internal static string menu_settings {
+            get {
+                return ResourceManager.GetString("menu_settings", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Current log format.
+        /// </summary>
+        internal static string settings_current_format {
+            get {
+                return ResourceManager.GetString("settings_current_format", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Choose format (1=JSON, 2=XML):.
+        /// </summary>
+        internal static string settings_choose_format {
+            get {
+                return ResourceManager.GetString("settings_choose_format", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Log format updated. Restart to apply.
+        /// </summary>
+        internal static string settings_format_saved {
+            get {
+                return ResourceManager.GetString("settings_format_saved", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Invalid choice.
+        /// </summary>
+        internal static string settings_invalid {
+            get {
+                return ResourceManager.GetString("settings_invalid", resourceCulture);
+            }
+        }
     }
 }

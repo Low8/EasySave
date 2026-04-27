@@ -165,4 +165,19 @@
   <data name="error_invalid_input" xml:space="preserve">
     <value>Saisie invalide.</value>
   </data>
+  <data name="menu_settings" xml:space="preserve">
+    <value>Paramètres</value>
+  </data>
+  <data name="settings_current_format" xml:space="preserve">
+    <value>Format de log actuel</value>
+  </data>
+  <data name="settings_choose_format" xml:space="preserve">
+    <value>Choisissez le format (1=JSON, 2=XML) :</value>
+  </data>
+  <data name="settings_format_saved" xml:space="preserve">
+    <value>Format mis à jour. Redémarrez pour appliquer.</value>
+  </data>
+  <data name="settings_invalid" xml:space="preserve">
+    <value>Choix invalide.</value>
+  </data>
 </root>
