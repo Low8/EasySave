@@ -32,11 +32,11 @@ jobs:
       - name: Build macOS
         run: dotnet publish EasySave.Console/EasySave.Console.csproj -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true -o ./out/macos
 
-      - name: Release
+       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag || github.ref_name }}
           files: |
-            ./out/windows/*.exe
-            ./out/linux/*
-            ./out/macos/*
+            ./out/windows/EasySave.exe
+            ./out/linux/EasySave
+            ./out/macos/EasySave
