@@ -1,6 +1,3 @@
-using System.Text.Json;
-using System.Xml.Linq;
-
 namespace EasyLog;
 
 public class EasyLogger
@@ -21,38 +18,14 @@ public class EasyLogger
         lock (_lock)
         {
             string path = GetDailyFilePath();
-            List<LogEntry> entries = ReadEntries(path);
+            bool fileExisted = File.Exists(path);
+            List<LogEntry> entries = _formatter.Read(path);
+            if (fileExisted && entries.Count == 0)
+            {
+                Console.Error.WriteLine($"[EasyLogger] Warning: could not read existing log file '{path}'. Entry will be written as first entry.");
+            }
             entries.Add(entry);
             File.WriteAllText(path, _formatter.Format(entries));
-        }
-    }
-
-    private static List<LogEntry> ReadEntries(string path)
-    {
-        if (!File.Exists(path))
-            return [];
-
-        try
-        {
-            if (path.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
-            {
-                var doc = XDocument.Load(path);
-                return doc.Root?.Elements("LogEntry")
-                    .Select(e => new LogEntry
-                    {
-                        Timestamp = DateTime.Parse(e.Element("Timestamp")!.Value),
-                        BackupName = e.Element("BackupName")!.Value,
-                        SourcePath = e.Element("SourcePath")!.Value,
-                        DestPath = e.Element("DestPath")!.Value,
-                        FileSize = long.Parse(e.Element("FileSize")!.Value),
-                        TransferMs = long.Parse(e.Element("TransferMs")!.Value)
-                    }).ToList() ?? [];
-            }
-            return JsonSerializer.Deserialize<List<LogEntry>>(File.ReadAllText(path)) ?? [];
-        }
-        catch
-        {
-            return [];
         }
     }
 

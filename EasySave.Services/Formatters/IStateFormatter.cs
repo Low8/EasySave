@@ -6,4 +6,5 @@ public interface IStateFormatter
 {
     string FileExtension { get; }
     string Format(List<BackupState> states);
+    List<BackupState> Read(string filePath);
 }
