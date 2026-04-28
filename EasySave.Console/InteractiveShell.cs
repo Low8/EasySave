@@ -25,7 +25,7 @@ public class InteractiveShell
         while (true)
         {
             ShowMenu();
-            var input = Console.ReadLine();
+            var input = Console.ReadLine() ?? string.Empty;
 
             switch (input)
             {
@@ -66,16 +66,16 @@ public class InteractiveShell
     private void CreateJob()
     {
         Console.Write(_loc.Get("prompt_name"));
-        var name = Console.ReadLine();
+        var name = Console.ReadLine() ?? string.Empty;
 
         Console.Write(_loc.Get("prompt_source"));
-        var source = Console.ReadLine();
+        var source = Console.ReadLine() ?? string.Empty;
 
         Console.Write(_loc.Get("prompt_target"));
-        var target = Console.ReadLine();
+        var target = Console.ReadLine() ?? string.Empty;
 
         Console.Write(_loc.Get("prompt_type"));
-        var type = Console.ReadLine() == "2"
+        var type = (Console.ReadLine() ?? string.Empty) == "2"
             ? BackupType.Differential
             : BackupType.Full;
 
@@ -96,28 +96,33 @@ public class InteractiveShell
             ListJobs();
 
             Console.Write(_loc.Get("prompt_select"));
-            int index = int.Parse(Console.ReadLine()) - 1;
+            if (!int.TryParse(Console.ReadLine() ?? string.Empty, out int n))
+            {
+                Console.WriteLine(_loc.Get("invalid"));
+                return;
+            }
+            int index = n - 1;
 
             var jobs = _service.GetJobs().ToList();
             var job = jobs[index];
 
             Console.Write($"{_loc.Get("prompt_name")} ({job.Name}): ");
-            var name = Console.ReadLine();
+            var name = Console.ReadLine() ?? string.Empty;
             if (!string.IsNullOrWhiteSpace(name))
                 job.Name = name;
 
             Console.Write($"{_loc.Get("prompt_source")} ({job.SourceDir}): ");
-            var source = Console.ReadLine();
+            var source = Console.ReadLine() ?? string.Empty;
             if (!string.IsNullOrWhiteSpace(source))
                 job.SourceDir = source;
 
             Console.Write($"{_loc.Get("prompt_target")} ({job.TargetDir}): ");
-            var target = Console.ReadLine();
+            var target = Console.ReadLine() ?? string.Empty;
             if (!string.IsNullOrWhiteSpace(target))
                 job.TargetDir = target;
 
             Console.Write($"{_loc.Get("prompt_type")} ({job.Type}): ");
-            var typeInput = Console.ReadLine();
+            var typeInput = Console.ReadLine() ?? string.Empty;
             if (!string.IsNullOrWhiteSpace(typeInput))
                 job.Type = typeInput == "2" ? BackupType.Differential : BackupType.Full;
 
@@ -126,10 +131,6 @@ public class InteractiveShell
         catch (ArgumentOutOfRangeException)
         {
             Console.WriteLine(_loc.Get("error_invalid_index"));
-        }
-        catch (FormatException)
-        {
-            Console.WriteLine(_loc.Get("error_invalid_input"));
         }
     }
 
@@ -140,17 +141,17 @@ public class InteractiveShell
             ListJobs();
 
             Console.Write(_loc.Get("prompt_select"));
-            int index = int.Parse(Console.ReadLine()) - 1;
+            if (!int.TryParse(Console.ReadLine() ?? string.Empty, out int n))
+            {
+                Console.WriteLine(_loc.Get("invalid"));
+                return;
+            }
 
-            _service.RemoveJob(index);
+            _service.RemoveJob(n - 1);
         }
         catch (ArgumentOutOfRangeException)
         {
             Console.WriteLine(_loc.Get("error_invalid_index"));
-        }
-        catch (FormatException)
-        {
-            Console.WriteLine(_loc.Get("error_invalid_input"));
         }
     }
 
@@ -161,17 +162,17 @@ public class InteractiveShell
             ListJobs();
 
             Console.Write(_loc.Get("prompt_select"));
-            int index = int.Parse(Console.ReadLine()) - 1;
+            if (!int.TryParse(Console.ReadLine() ?? string.Empty, out int n))
+            {
+                Console.WriteLine(_loc.Get("invalid"));
+                return;
+            }
 
-            await _service.RunJob(index);
+            await _service.RunJob(n - 1);
         }
         catch (ArgumentOutOfRangeException)
         {
             Console.WriteLine(_loc.Get("error_invalid_index"));
-        }
-        catch (FormatException)
-        {
-            Console.WriteLine(_loc.Get("error_invalid_input"));
         }
     }
 
@@ -186,10 +187,6 @@ public class InteractiveShell
         {
             Console.WriteLine(_loc.Get("error_invalid_index"));
         }
-        catch (FormatException)
-        {
-            Console.WriteLine(_loc.Get("error_invalid_input"));
-        }
     }
 
     private void ShowSettings()
@@ -199,7 +196,7 @@ public class InteractiveShell
         Console.WriteLine("1 - JSON");
         Console.WriteLine("2 - XML");
         Console.Write(_loc.Get("settings_choose_format"));
-        var input = Console.ReadLine();
+        var input = Console.ReadLine() ?? string.Empty;
 
         LogFormat? format = input switch
         {
