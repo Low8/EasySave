@@ -1,0 +1,23 @@
+name: Build Check
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Build
+        run: dotnet build EasySave.Console/EasySave.Console.csproj -c Release
+
+      - name: Test
+        run: dotnet test --no-build -c Release
