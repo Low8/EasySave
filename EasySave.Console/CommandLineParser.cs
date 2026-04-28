@@ -1,28 +1,28 @@
-﻿namespace EasySave.ConsoleApp;
+namespace EasySave.ConsoleApp;
 
 public class CommandLineParser
 {
     public IEnumerable<int> Parse(string[] args)
     {
-        var input = string.Join("", args);
-        var result = new List<int>();
-
-        if (input.Contains("-"))
+        if (args.Length == 0) yield break;
+        var input = string.Join(";", args);
+        foreach (var segment in input.Split(';'))
         {
-            var p = input.Split('-');
-            for (int i = int.Parse(p[0]) - 1; i <= int.Parse(p[1]) - 1; i++)
-                result.Add(i);
+            var trimmed = segment.Trim();
+            if (trimmed.Contains('-'))
+            {
+                var parts = trimmed.Split('-');
+                if (parts.Length == 2
+                    && int.TryParse(parts[0].Trim(), out int from)
+                    && int.TryParse(parts[1].Trim(), out int to))
+                {
+                    for (int i = from; i <= to; i++) yield return i;
+                }
+            }
+            else if (int.TryParse(trimmed, out int index))
+            {
+                yield return index;
+            }
         }
-        else if (input.Contains(";"))
-        {
-            foreach (var x in input.Split(';'))
-                result.Add(int.Parse(x) - 1);
-        }
-        else
-        {
-            result.Add(int.Parse(input) - 1);
-        }
-
-        return result;
     }
 }

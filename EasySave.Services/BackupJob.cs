@@ -29,23 +29,26 @@ public class BackupJob
             Directory.CreateDirectory(Path.GetDirectoryName(destFile)!);
 
             var sw = System.Diagnostics.Stopwatch.StartNew();
-            bool success;
-            bool copied;
+            bool copied = false;
+            bool failed = false;
             try
             {
                 copied = _strategy.Execute(sourceFile, destFile);
-                success = true;
             }
-            catch
+            catch (Exception)
             {
-                success = false;
-                copied = false;
+                failed = true;
             }
             sw.Stop();
 
-            var fileSize = success ? new FileInfo(destFile).Length : 0;
+            if (failed)
+            {
+                yield return new BackupResult(sourceFile, destFile, 0, -1, false, false);
+                continue;
+            }
 
-            yield return new BackupResult(sourceFile, destFile, fileSize, sw.ElapsedMilliseconds, success, Skipped: !copied);
+            var fileSize = new FileInfo(destFile).Length;
+            yield return new BackupResult(sourceFile, destFile, fileSize, sw.ElapsedMilliseconds, true, Skipped: !copied);
         }
     }
 }

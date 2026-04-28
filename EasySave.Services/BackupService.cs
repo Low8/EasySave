@@ -28,7 +28,11 @@ public class BackupService : IStateSubject
             observer.Update(state);
     }
 
-    public void LoadJobs() => _jobs.AddRange(_repository.GetAll());
+    private void LoadJobs()
+    {
+        _jobs.Clear();
+        _jobs.AddRange(_repository.GetAll());
+    }
 
     public void AddJob(BackupJobConfig config)
     {
