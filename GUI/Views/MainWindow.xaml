@@ -1,0 +1,90 @@
+﻿<Window x:Class="GUI.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{Binding MenuTitleText}" Height="720" Width="1100">
+
+    <Grid Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="3*" />
+        </Grid.ColumnDefinitions>
+
+        <ListBox ItemsSource="{Binding Jobs}"
+                 SelectedItem="{Binding SelectedJob}"
+                 Margin="0,0,10,0">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Border BorderBrush="#DDD" BorderThickness="1" Padding="8" Margin="0,0,0,8">
+                        <StackPanel>
+                            <TextBlock Text="{Binding Name}" FontWeight="Bold" />
+                            <TextBlock Text="{Binding SourceDir}" />
+                            <TextBlock Text="{Binding TargetDir}" />
+                            <TextBlock Text="{Binding Type}" />
+                            <ProgressBar Value="{Binding Progress}" Maximum="100" Height="12" Margin="0,4,0,0" />
+                            <TextBlock Text="{Binding Status}" />
+                            <CheckBox Content="Active" IsChecked="{Binding IsActive, Mode=OneWay}" IsEnabled="False" />
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="{Binding StatusMessage}" Foreground="DarkGreen" TextWrapping="Wrap" Margin="0,0,0,10" />
+                <GroupBox Header="Actions" Margin="0,0,0,10">
+                    <StackPanel>
+                        <Button Content="{Binding MenuRunText}" Command="{Binding RunSelectedCommand}" Margin="0,0,0,4" />
+                        <Button Content="{Binding MenuRunAllText}" Command="{Binding RunAllCommand}" Margin="0,0,0,4" />
+                        <Button Content="Pause" Command="{Binding PauseCommand}" Margin="0,0,0,4" />
+                        <Button Content="Resume" Command="{Binding ResumeCommand}" Margin="0,0,0,4" />
+                        <Button Content="Stop" Command="{Binding StopCommand}" Margin="0,0,0,4" />
+                        <Button Content="{Binding MenuDeleteText}" Command="{Binding RemoveJobCommand}" />
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Header="{Binding MenuCreateText}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="{Binding PromptNameText}" />
+                        <TextBox Text="{Binding NewJobName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                        <TextBlock Text="{Binding PromptSourceText}" />
+                        <TextBox Text="{Binding NewSourceDir, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                        <TextBlock Text="{Binding PromptTargetText}" />
+                        <TextBox Text="{Binding NewTargetDir, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                        <TextBlock Text="{Binding PromptTypeText}" />
+                        <ComboBox ItemsSource="{Binding BackupTypes}" SelectedItem="{Binding NewJobType}" Margin="0,0,0,6" />
+                        <CheckBox Content="Active" IsChecked="{Binding NewJobIsActive}" Margin="0,0,0,6" />
+                        <Button Content="{Binding MenuCreateText}" Command="{Binding AddJobCommand}" />
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Header="{Binding MenuEditText}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="{Binding PromptNameText}" />
+                        <TextBox Text="{Binding EditJobName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                        <TextBlock Text="{Binding PromptSourceText}" />
+                        <TextBox Text="{Binding EditSourceDir, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                        <TextBlock Text="{Binding PromptTargetText}" />
+                        <TextBox Text="{Binding EditTargetDir, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                        <TextBlock Text="{Binding PromptTypeText}" />
+                        <ComboBox ItemsSource="{Binding BackupTypes}" SelectedItem="{Binding EditJobType}" Margin="0,0,0,6" />
+                        <CheckBox Content="Active" IsChecked="{Binding EditJobIsActive}" Margin="0,0,0,6" />
+                        <Button Content="{Binding MenuEditText}" Command="{Binding UpdateJobCommand}" />
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Header="{Binding MenuSettingsText}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding SettingsCurrentFormatText}" />
+                        <ComboBox ItemsSource="{Binding Settings.LogFormats}" SelectedItem="{Binding Settings.LogFormat}" Margin="0,0,0,6" />
+                        <Button Content="Save" Command="{Binding Settings.SaveCommand}" Margin="0,0,0,10" />
+
+                        <TextBlock Text="Language" />
+                        <ComboBox ItemsSource="{Binding Settings.LanguageOptions}" SelectedItem="{Binding Settings.SelectedLanguage}" Margin="0,0,0,6" />
+                        <Button Content="Apply" Command="{Binding Settings.ChangeLanguageCommand}" />
+                    </StackPanel>
+                </GroupBox>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>
