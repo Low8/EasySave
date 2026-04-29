@@ -1,7 +1,13 @@
 {
   "LogFormat": "Json",
+  "Language": "fr",
   "CryptoSoftPath": "tools\\CryptoSoft.exe",
   "EncryptionKey": "easysave",
-  "EncryptedExtensions": [ ".pdf" ],
-  "BusinessSoftwareNames": [ "notepad" ]
+  "EncryptedExtensions": [
+    ".pdf"
+  ],
+  "BusinessSoftwareNames": [
+    "CalculatorApp.exe",
+    "qsdgf"
+  ]
 }

@@ -7,6 +7,8 @@ using EasySave.Services.Formatters;
 using EasySave.Services.Guard;
 using EasySave.GUI.Repositories;
 using EasyLog;
+using EasySave.Services.Encryption;
+using EasySave.Services.Guard;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Linq;
@@ -162,7 +164,7 @@ namespace EasySave.GUI.ViewModels
             _logDir = logDir;
             _statePath = statePath;
 
-            Settings = new SettingsViewModel(settingsRepo, "fr", ChangeLanguage, ApplyLogFormat);
+            Settings = new SettingsViewModel(settingsRepo, ChangeLanguage, ApplyLogFormat);
 
             _service.Attach(this);
 
@@ -191,16 +193,10 @@ namespace EasySave.GUI.ViewModels
                 ? new JsonStateFormatter()
                 : new XmlStateFormatter();
 
+            var settings = _settingsRepo.Load();
             var logger = new EasyLogger(_logDir, formatter);
-
-            var currentSettings = _settingsRepo.Load();
-            IEncryptionService encryptionService = !string.IsNullOrWhiteSpace(currentSettings.CryptoSoftPath)
-                ? new CryptoSoftEncryptionService(currentSettings.CryptoSoftPath, currentSettings.EncryptionKey, currentSettings.EncryptedExtensions)
-                : new NoEncryptionService();
-            IBusinessSoftwareGuard guard = currentSettings.BusinessSoftwareNames.Count > 0
-                ? new ProcessBusinessSoftwareGuard(currentSettings.BusinessSoftwareNames)
-                : new NoBusinessSoftwareGuard();
-
+            var encryptionService = CreateEncryptionService(settings);
+            var guard = CreateBusinessSoftwareGuard(settings);
             var service = new BackupService(_configPath, logger, encryptionService, guard);
 
             service.Attach(this);
@@ -217,6 +213,24 @@ namespace EasySave.GUI.ViewModels
                 SelectedJob = Jobs.FirstOrDefault(j => j.Name == selectedName);
 
             StatusMessage = _loc.Get("menu_settings") + " OK";
+        }
+
+        private static IEncryptionService CreateEncryptionService(AppSettings settings)
+        {
+            return !string.IsNullOrWhiteSpace(settings.CryptoSoftPath)
+                && settings.EncryptedExtensions.Count > 0
+                    ? new CryptoSoftEncryptionService(
+                        settings.CryptoSoftPath,
+                        settings.EncryptionKey,
+                        settings.EncryptedExtensions)
+                    : new NoEncryptionService();
+        }
+
+        private static IBusinessSoftwareGuard CreateBusinessSoftwareGuard(AppSettings settings)
+        {
+            return settings.BusinessSoftwareNames.Count > 0
+                ? new ProcessBusinessSoftwareGuard(settings.BusinessSoftwareNames)
+                : new NoBusinessSoftwareGuard();
         }
 
         private void LoadJobs()
@@ -289,8 +303,15 @@ namespace EasySave.GUI.ViewModels
             _cts[index] = cts;
             StatusMessage = _loc.Get("menu_run") + " ...";
 
-            await Task.Run(async () => await _service.RunJob(index, cts.Token));
-            StatusMessage = _loc.Get("menu_run") + " OK";
+            try
+            {
+                await Task.Run(async () => await _service.RunJob(index, cts.Token));
+                StatusMessage = _loc.Get("menu_run") + " OK";
+            }
+            finally
+            {
+                SelectedJob.IsActive = false;
+            }
         }
 
         private async void RunAll()
@@ -300,8 +321,16 @@ namespace EasySave.GUI.ViewModels
 
             var indices = Enumerable.Range(0, Jobs.Count);
             StatusMessage = _loc.Get("menu_run_all") + " ...";
-            await Task.Run(async () => await _service.RunRange(indices, _runAllCts.Token));
-            StatusMessage = _loc.Get("menu_run_all") + " OK";
+            try
+            {
+                await Task.Run(async () => await _service.RunRange(indices, _runAllCts.Token));
+                StatusMessage = _loc.Get("menu_run_all") + " OK";
+            }
+            finally
+            {
+                foreach (var job in Jobs)
+                    job.IsActive = false;
+            }
         }
 
         private void AddJob()
@@ -313,27 +342,33 @@ namespace EasySave.GUI.ViewModels
                 StatusMessage = _loc.Get("error_invalid_input");
                 return;
             }
-
-            var config = new BackupJobConfig
+            try
             {
-                Name = NewJobName,
-                SourceDir = NewSourceDir,
-                TargetDir = NewTargetDir,
-                Type = NewJobType,
-                IsActive = false
-            };
+                var config = new BackupJobConfig
+                {
+                    Name = NewJobName,
+                    SourceDir = NewSourceDir,
+                    TargetDir = NewTargetDir,
+                    Type = NewJobType,
+                    IsActive = false
+                };
 
-            _service.AddJob(config);
-            Jobs.Add(new BackupJobViewModel(config));
+                _service.AddJob(config);
+                Jobs.Add(new BackupJobViewModel(config));
 
-            StatusMessage = _loc.Get("menu_create") + " OK";
+                StatusMessage = _loc.Get("menu_create") + " OK";
 
-            NewJobName = string.Empty;
-            NewSourceDir = string.Empty;
-            NewTargetDir = string.Empty;
-            NewJobType = BackupType.Full;
+                NewJobName = string.Empty;
+                NewSourceDir = string.Empty;
+                NewTargetDir = string.Empty;
+                NewJobType = BackupType.Full;
 
-            UpdateCommandStates();
+                UpdateCommandStates();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = "Error: " + ex.Message;
+            }
         }
 
         private void UpdateSelectedJob()
@@ -345,18 +380,25 @@ namespace EasySave.GUI.ViewModels
             if (index < 0)
                 return;
 
-            var config = new BackupJobConfig
+            try
             {
-                Name = EditJobName,
-                SourceDir = EditSourceDir,
-                TargetDir = EditTargetDir,
-                Type = EditJobType,
-                IsActive = SelectedJob.IsActive
-            };
+                var config = new BackupJobConfig
+                {
+                    Name = EditJobName,
+                    SourceDir = EditSourceDir,
+                    TargetDir = EditTargetDir,
+                    Type = EditJobType,
+                    IsActive = SelectedJob.IsActive
+                };
 
-            _service.UpdateJob(index, config);
-            SelectedJob.UpdateFromConfig(config);
-            StatusMessage = _loc.Get("menu_edit") + " OK";
+                _service.UpdateJob(index, config);
+                SelectedJob.UpdateFromConfig(config);
+                StatusMessage = _loc.Get("menu_edit") + " OK";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = "Error: " + ex.Message;
+            }
         }
 
         private void RemoveSelectedJob()
@@ -368,10 +410,17 @@ namespace EasySave.GUI.ViewModels
             if (index < 0)
                 return;
 
-            _service.RemoveJob(index);
-            Jobs.RemoveAt(index);
-            SelectedJob = null;
-            StatusMessage = _loc.Get("menu_delete") + " OK";
+            try
+            {
+                _service.RemoveJob(index);
+                Jobs.RemoveAt(index);
+                SelectedJob = null;
+                StatusMessage = _loc.Get("menu_delete") + " OK";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = "Error: " + ex.Message;
+            }
         }
 
         private void BrowseFolder(Action<string> setPath)
