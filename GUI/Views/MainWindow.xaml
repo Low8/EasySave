@@ -44,7 +44,20 @@
                             <TextBlock Grid.Row="8" Text="{Binding CurrentFile, StringFormat=Current source: {0}}" Foreground="#666" TextWrapping="Wrap" />
                             <TextBlock Grid.Row="9" Text="{Binding CurrentDest, StringFormat=Current dest: {0}}" Foreground="#666" TextWrapping="Wrap" />
                             <TextBlock Grid.Row="10" Text="{Binding LastActionTime, StringFormat=Last update: {0:HH:mm:ss}}" Foreground="#666" />
-                            <CheckBox Grid.Row="11" Content="Active" IsChecked="{Binding IsActive, Mode=OneWay}" IsEnabled="False" />
+                            <TextBlock Grid.Row="11">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="Inactive" />
+                                        <Setter Property="Foreground" Value="#999" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                <Setter Property="Text" Value="Active" />
+                                                <Setter Property="Foreground" Value="Green" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </Grid>
                     </Border>
                 </DataTemplate>
@@ -79,7 +92,6 @@
                         </StackPanel>
                         <TextBlock Text="{Binding PromptTypeText}" />
                         <ComboBox ItemsSource="{Binding BackupTypes}" SelectedItem="{Binding NewJobType}" Margin="0,0,0,6" />
-                        <CheckBox Content="Active" IsChecked="{Binding NewJobIsActive}" Margin="0,0,0,6" />
                         <Button Content="{Binding MenuCreateText}" Command="{Binding AddJobCommand}" />
                     </StackPanel>
                 </ScrollViewer>
@@ -101,7 +113,6 @@
                         </StackPanel>
                         <TextBlock Text="{Binding PromptTypeText}" />
                         <ComboBox ItemsSource="{Binding BackupTypes}" SelectedItem="{Binding EditJobType}" Margin="0,0,0,6" />
-                        <CheckBox Content="Active" IsChecked="{Binding EditJobIsActive}" Margin="0,0,0,6" />
                         <Button Content="{Binding MenuEditText}" Command="{Binding UpdateJobCommand}" />
                     </StackPanel>
                 </ScrollViewer>

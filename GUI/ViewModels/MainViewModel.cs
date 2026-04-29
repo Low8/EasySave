@@ -3,6 +3,8 @@ using EasySave.Localization;
 using EasySave.Models;
 using EasySave.Services;
 using EasySave.GUI.Repositories;
+using EasySave.Services.Formatters;
+using EasyLog;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,9 +16,12 @@ namespace EasySave.GUI.ViewModels
 {
     public class MainViewModel : ViewModelBase, IStateObserver
     {
-        private readonly BackupService _service;
+        private BackupService _service;
         private ILocalizationService _loc;
         private readonly IAppSettingsRepository _settingsRepo;
+        private readonly string _configPath;
+        private readonly string _logDir;
+        private readonly string _statePath;
 
         private readonly Dictionary<int, CancellationTokenSource> _cts = new();
         private CancellationTokenSource _runAllCts;
@@ -90,13 +95,6 @@ namespace EasySave.GUI.ViewModels
             set => SetProperty(ref _newJobType, value);
         }
 
-        private bool _newJobIsActive = true;
-        public bool NewJobIsActive
-        {
-            get => _newJobIsActive;
-            set => SetProperty(ref _newJobIsActive, value);
-        }
-
         private string _editJobName;
         public string EditJobName
         {
@@ -125,12 +123,6 @@ namespace EasySave.GUI.ViewModels
             set => SetProperty(ref _editJobType, value);
         }
 
-        private bool _editJobIsActive;
-        public bool EditJobIsActive
-        {
-            get => _editJobIsActive;
-            set => SetProperty(ref _editJobIsActive, value);
-        }
 
         private string _statusMessage;
         public string StatusMessage
@@ -156,13 +148,19 @@ namespace EasySave.GUI.ViewModels
         public MainViewModel(
             BackupService service,
             ILocalizationService loc,
-            IAppSettingsRepository settingsRepo)
+            IAppSettingsRepository settingsRepo,
+            string configPath,
+            string logDir,
+            string statePath)
         {
             _service = service;
             _loc = loc;
             _settingsRepo = settingsRepo;
+            _configPath = configPath;
+            _logDir = logDir;
+            _statePath = statePath;
 
-            Settings = new SettingsViewModel(settingsRepo, "fr", ChangeLanguage);
+            Settings = new SettingsViewModel(settingsRepo, "fr", ChangeLanguage, ApplyLogFormat);
 
             _service.Attach(this);
 
@@ -177,6 +175,37 @@ namespace EasySave.GUI.ViewModels
             _browseNewTargetCommand = new RelayCommand(() => BrowseFolder(path => NewTargetDir = path));
             _browseEditSourceCommand = new RelayCommand(() => BrowseFolder(path => EditSourceDir = path));
             _browseEditTargetCommand = new RelayCommand(() => BrowseFolder(path => EditTargetDir = path));
+        }
+
+        private void ApplyLogFormat(LogFormat format)
+        {
+            _service.Detach(this);
+
+            ILogFormatter formatter = format == LogFormat.Json
+                ? new JsonLogFormatter()
+                : new XmlLogFormatter();
+
+            IStateFormatter stateFormatter = format == LogFormat.Json
+                ? new JsonStateFormatter()
+                : new XmlStateFormatter();
+
+            var logger = new EasyLogger(_logDir, formatter);
+            var service = new BackupService(_configPath, logger);
+
+            service.Attach(this);
+
+            var stateWriter = new StateFileWriter(_statePath, stateFormatter);
+            service.Attach(stateWriter);
+
+            _service = service;
+            _cts.Clear();
+
+            var selectedName = SelectedJob?.Name;
+            LoadJobs();
+            if (!string.IsNullOrWhiteSpace(selectedName))
+                SelectedJob = Jobs.FirstOrDefault(j => j.Name == selectedName);
+
+            StatusMessage = _loc.Get("menu_settings") + " OK";
         }
 
         private void LoadJobs()
@@ -196,7 +225,6 @@ namespace EasySave.GUI.ViewModels
                 EditSourceDir = string.Empty;
                 EditTargetDir = string.Empty;
                 EditJobType = BackupType.Full;
-                EditJobIsActive = false;
                 return;
             }
 
@@ -204,7 +232,6 @@ namespace EasySave.GUI.ViewModels
             EditSourceDir = SelectedJob.SourceDir;
             EditTargetDir = SelectedJob.TargetDir;
             EditJobType = SelectedJob.Type;
-            EditJobIsActive = SelectedJob.IsActive;
         }
 
         private void UpdateCommandStates()
@@ -282,7 +309,7 @@ namespace EasySave.GUI.ViewModels
                 SourceDir = NewSourceDir,
                 TargetDir = NewTargetDir,
                 Type = NewJobType,
-                IsActive = NewJobIsActive
+                IsActive = false
             };
 
             _service.AddJob(config);
@@ -294,7 +321,6 @@ namespace EasySave.GUI.ViewModels
             NewSourceDir = string.Empty;
             NewTargetDir = string.Empty;
             NewJobType = BackupType.Full;
-            NewJobIsActive = true;
 
             UpdateCommandStates();
         }
@@ -314,7 +340,7 @@ namespace EasySave.GUI.ViewModels
                 SourceDir = EditSourceDir,
                 TargetDir = EditTargetDir,
                 Type = EditJobType,
-                IsActive = EditJobIsActive
+                IsActive = SelectedJob.IsActive
             };
 
             _service.UpdateJob(index, config);

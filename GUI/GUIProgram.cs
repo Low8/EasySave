@@ -38,7 +38,7 @@ namespace EasySave.GUI
             var stateWriter = new StateFileWriter(statePath, stateFormatter);
             service.Attach(stateWriter);
 
-            var vm = new MainViewModel(service, loc, settingsRepo);
+            var vm = new MainViewModel(service, loc, settingsRepo, configPath, logDir, statePath);
 
             var window = new MainWindow
             {

@@ -10,7 +10,17 @@ namespace EasySave.GUI.ViewModels
         public string SourceDir => _config.SourceDir;
         public string TargetDir => _config.TargetDir;
         public BackupType Type => _config.Type;
-        public bool IsActive => _config.IsActive;
+        public bool IsActive
+        {
+            get => _config.IsActive;
+            set
+            {
+                if (_config.IsActive == value)
+                    return;
+                _config.IsActive = value;
+                OnPropertyChanged();
+            }
+        }
 
         private float _progress;
         public float Progress { get => _progress; set => SetProperty(ref _progress, value); }
@@ -78,6 +88,7 @@ namespace EasySave.GUI.ViewModels
             CurrentDest = state.CurrentDest;
             LastFileSkipped = state.LastFileSkipped;
             IsPaused = state.Status == BackupStatus.Paused;
+            IsActive = state.Status == BackupStatus.Running;
         }
     }
 }

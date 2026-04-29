@@ -10,6 +10,7 @@ namespace EasySave.GUI.ViewModels
     {
         private readonly IAppSettingsRepository _repo;
         private readonly Action<string> _changeLanguage;
+        private readonly Action<LogFormat> _applyLogFormat;
         private AppSettings _settings;
         private string _selectedLanguage;
 
@@ -38,14 +39,23 @@ namespace EasySave.GUI.ViewModels
         public ICommand SaveCommand { get; }
         public ICommand ChangeLanguageCommand { get; }
 
-        public SettingsViewModel(IAppSettingsRepository repo, string initialLanguage, Action<string> changeLanguage)
+        public SettingsViewModel(
+            IAppSettingsRepository repo,
+            string initialLanguage,
+            Action<string> changeLanguage,
+            Action<LogFormat> applyLogFormat)
         {
             _repo = repo;
             _changeLanguage = changeLanguage;
+            _applyLogFormat = applyLogFormat;
             _settings = repo.Load();
             _selectedLanguage = initialLanguage;
 
-            SaveCommand = new RelayCommand(() => _repo.Save(_settings));
+            SaveCommand = new RelayCommand(() =>
+            {
+                _repo.Save(_settings);
+                _applyLogFormat?.Invoke(_settings.LogFormat);
+            });
             ChangeLanguageCommand = new RelayCommand(() => _changeLanguage?.Invoke(SelectedLanguage));
         }
     }
