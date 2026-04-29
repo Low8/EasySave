@@ -2,8 +2,10 @@
 using EasySave.Localization;
 using EasySave.Models;
 using EasySave.Services;
-using EasySave.GUI.Repositories;
+using EasySave.Services.Encryption;
 using EasySave.Services.Formatters;
+using EasySave.Services.Guard;
+using EasySave.GUI.Repositories;
 using EasyLog;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
@@ -190,7 +192,16 @@ namespace EasySave.GUI.ViewModels
                 : new XmlStateFormatter();
 
             var logger = new EasyLogger(_logDir, formatter);
-            var service = new BackupService(_configPath, logger);
+
+            var currentSettings = _settingsRepo.Load();
+            IEncryptionService encryptionService = !string.IsNullOrWhiteSpace(currentSettings.CryptoSoftPath)
+                ? new CryptoSoftEncryptionService(currentSettings.CryptoSoftPath, currentSettings.EncryptionKey, currentSettings.EncryptedExtensions)
+                : new NoEncryptionService();
+            IBusinessSoftwareGuard guard = currentSettings.BusinessSoftwareNames.Count > 0
+                ? new ProcessBusinessSoftwareGuard(currentSettings.BusinessSoftwareNames)
+                : new NoBusinessSoftwareGuard();
+
+            var service = new BackupService(_configPath, logger, encryptionService, guard);
 
             service.Attach(this);
 
