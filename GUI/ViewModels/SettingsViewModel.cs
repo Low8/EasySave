@@ -1,4 +1,4 @@
-﻿using EasySave.GUI.Commands;
+using EasySave.GUI.Commands;
 using EasySave.GUI.Repositories;
 using EasySave.Models;
 using System.Collections.Generic;
@@ -18,6 +18,9 @@ namespace EasySave.GUI.ViewModels
         private string _newBusinessSoftwareName;
         private string _selectedBusinessSoftwareName;
         private RelayCommand _removeBusinessSoftwareCommand;
+        private string _newEncryptedExtension;
+        private string _selectedEncryptedExtension;
+        private RelayCommand _removeEncryptedExtensionCommand;
         private string _statusMessage;
 
         public LogFormat LogFormat
@@ -64,6 +67,24 @@ namespace EasySave.GUI.ViewModels
             }
         }
 
+        public ObservableCollection<string> EncryptedExtensions { get; } = new();
+
+        public string NewEncryptedExtension
+        {
+            get => _newEncryptedExtension;
+            set => SetProperty(ref _newEncryptedExtension, value);
+        }
+
+        public string SelectedEncryptedExtension
+        {
+            get => _selectedEncryptedExtension;
+            set
+            {
+                if (SetProperty(ref _selectedEncryptedExtension, value))
+                    _removeEncryptedExtensionCommand?.RaiseCanExecuteChanged();
+            }
+        }
+
         public string StatusMessage
         {
             get => _statusMessage;
@@ -73,6 +94,8 @@ namespace EasySave.GUI.ViewModels
         public ICommand SaveCommand { get; }
         public ICommand AddBusinessSoftwareCommand { get; }
         public ICommand RemoveBusinessSoftwareCommand => _removeBusinessSoftwareCommand;
+        public ICommand AddEncryptedExtensionCommand { get; }
+        public ICommand RemoveEncryptedExtensionCommand => _removeEncryptedExtensionCommand;
 
         public SettingsViewModel(
             IAppSettingsRepository repo,
@@ -85,20 +108,30 @@ namespace EasySave.GUI.ViewModels
             _settings = repo.Load();
             _selectedLanguage = string.IsNullOrWhiteSpace(_settings.Language) ? "fr" : _settings.Language;
             _settings.Language = _selectedLanguage;
+
             foreach (var name in _settings.BusinessSoftwareNames)
                 BusinessSoftwareNames.Add(name);
+
+            foreach (var ext in _settings.EncryptedExtensions)
+                EncryptedExtensions.Add(ext);
 
             SaveCommand = new RelayCommand(() =>
             {
                 SyncBusinessSoftwareNames();
+                SyncEncryptedExtensions();
                 _repo.Save(_settings);
                 _applyLogFormat?.Invoke(_settings.LogFormat);
                 _changeLanguage?.Invoke(SelectedLanguage);
                 StatusMessage = "Applied";
             });
+
             AddBusinessSoftwareCommand = new RelayCommand(AddBusinessSoftware);
             _removeBusinessSoftwareCommand = new RelayCommand(RemoveBusinessSoftware, () =>
                 !string.IsNullOrWhiteSpace(SelectedBusinessSoftwareName));
+
+            AddEncryptedExtensionCommand = new RelayCommand(AddEncryptedExtension);
+            _removeEncryptedExtensionCommand = new RelayCommand(RemoveEncryptedExtension, () =>
+                !string.IsNullOrWhiteSpace(SelectedEncryptedExtension));
         }
 
         private void AddBusinessSoftware()
@@ -129,9 +162,45 @@ namespace EasySave.GUI.ViewModels
             StatusMessage = "Removed";
         }
 
+        private void AddEncryptedExtension()
+        {
+            if (string.IsNullOrWhiteSpace(NewEncryptedExtension))
+                return;
+
+            var ext = NewEncryptedExtension.Trim().ToLowerInvariant();
+            if (!ext.StartsWith("."))
+                ext = "." + ext;
+
+            if (EncryptedExtensions.Contains(ext))
+                return;
+
+            EncryptedExtensions.Add(ext);
+            NewEncryptedExtension = string.Empty;
+            SyncEncryptedExtensions();
+            _removeEncryptedExtensionCommand?.RaiseCanExecuteChanged();
+            StatusMessage = "Added";
+        }
+
+        private void RemoveEncryptedExtension()
+        {
+            if (string.IsNullOrWhiteSpace(SelectedEncryptedExtension))
+                return;
+
+            EncryptedExtensions.Remove(SelectedEncryptedExtension);
+            SelectedEncryptedExtension = null;
+            SyncEncryptedExtensions();
+            _removeEncryptedExtensionCommand?.RaiseCanExecuteChanged();
+            StatusMessage = "Removed";
+        }
+
         private void SyncBusinessSoftwareNames()
         {
             _settings.BusinessSoftwareNames = BusinessSoftwareNames.ToList();
+        }
+
+        private void SyncEncryptedExtensions()
+        {
+            _settings.EncryptedExtensions = EncryptedExtensions.ToList();
         }
     }
 }

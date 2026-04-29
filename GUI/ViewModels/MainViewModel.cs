@@ -7,8 +7,6 @@ using EasySave.Services.Formatters;
 using EasySave.Services.Guard;
 using EasySave.GUI.Repositories;
 using EasyLog;
-using EasySave.Services.Encryption;
-using EasySave.Services.Guard;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Linq;

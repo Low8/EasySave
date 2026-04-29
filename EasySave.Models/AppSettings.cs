@@ -9,6 +9,6 @@ public class AppSettings
     public string Language { get; set; } = "fr";
     public string CryptoSoftPath { get; set; } = string.Empty;
     public string EncryptionKey { get; set; } = string.Empty;
-    public IReadOnlyList<string> EncryptedExtensions { get; set; } = [];
+    public List<string> EncryptedExtensions { get; set; } = [];
     public List<string> BusinessSoftwareNames { get; set; } = [];
 }
