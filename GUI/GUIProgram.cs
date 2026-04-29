@@ -2,8 +2,10 @@
 using EasySave.GUI.ViewModels;
 using EasySave.Localization;
 using EasySave.Models;
-using EasySave.Services.Formatters;
 using EasySave.Services;
+using EasySave.Services.Encryption;
+using EasySave.Services.Formatters;
+using EasySave.Services.Guard;
 using EasySave.GUI.Repositories;
 using GUI.Views;
 using System.IO;
@@ -32,7 +34,16 @@ namespace EasySave.GUI
             var logger = new EasyLogger(logDir, formatter);
 
             var configPath = Path.Combine(solutionRoot, "config.json");
-            var service = new BackupService(configPath, logger);
+
+            IEncryptionService encryptionService = !string.IsNullOrWhiteSpace(settings.CryptoSoftPath)
+                ? new CryptoSoftEncryptionService(settings.CryptoSoftPath, settings.EncryptionKey, settings.EncryptedExtensions)
+                : new NoEncryptionService();
+
+            IBusinessSoftwareGuard guard = settings.BusinessSoftwareNames.Count > 0
+                ? new ProcessBusinessSoftwareGuard(settings.BusinessSoftwareNames)
+                : new NoBusinessSoftwareGuard();
+
+            var service = new BackupService(configPath, logger, encryptionService, guard);
 
             var statePath = Path.Combine(solutionRoot, "logs", "live", "state.json");
             var stateWriter = new StateFileWriter(statePath, stateFormatter);
