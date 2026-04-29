@@ -1,10 +1,2 @@
-﻿namespace EasySave.Tests;
-
-public class UnitTest1
-{
-    [Fact]
-    public void Test1()
-    {
-
-    }
-}
+// Ce fichier est volontairement vide — les tests sont dans les fichiers dédiés.
+namespace EasySave.Tests;
