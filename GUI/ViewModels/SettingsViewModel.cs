@@ -18,6 +18,7 @@ namespace EasySave.GUI.ViewModels
         private string _newBusinessSoftwareName;
         private string _selectedBusinessSoftwareName;
         private RelayCommand _removeBusinessSoftwareCommand;
+        private string _statusMessage;
 
         public LogFormat LogFormat
         {
@@ -63,8 +64,13 @@ namespace EasySave.GUI.ViewModels
             }
         }
 
+        public string StatusMessage
+        {
+            get => _statusMessage;
+            set => SetProperty(ref _statusMessage, value);
+        }
+
         public ICommand SaveCommand { get; }
-        public ICommand ChangeLanguageCommand { get; }
         public ICommand AddBusinessSoftwareCommand { get; }
         public ICommand RemoveBusinessSoftwareCommand => _removeBusinessSoftwareCommand;
 
@@ -87,11 +93,8 @@ namespace EasySave.GUI.ViewModels
                 SyncBusinessSoftwareNames();
                 _repo.Save(_settings);
                 _applyLogFormat?.Invoke(_settings.LogFormat);
-            });
-            ChangeLanguageCommand = new RelayCommand(() =>
-            {
-                _repo.Save(_settings);
                 _changeLanguage?.Invoke(SelectedLanguage);
+                StatusMessage = "Applied";
             });
             AddBusinessSoftwareCommand = new RelayCommand(AddBusinessSoftware);
             _removeBusinessSoftwareCommand = new RelayCommand(RemoveBusinessSoftware, () =>
@@ -111,6 +114,7 @@ namespace EasySave.GUI.ViewModels
             NewBusinessSoftwareName = string.Empty;
             SyncBusinessSoftwareNames();
             _removeBusinessSoftwareCommand?.RaiseCanExecuteChanged();
+            StatusMessage = "Added";
         }
 
         private void RemoveBusinessSoftware()
@@ -122,6 +126,7 @@ namespace EasySave.GUI.ViewModels
             SelectedBusinessSoftwareName = null;
             SyncBusinessSoftwareNames();
             _removeBusinessSoftwareCommand?.RaiseCanExecuteChanged();
+            StatusMessage = "Removed";
         }
 
         private void SyncBusinessSoftwareNames()

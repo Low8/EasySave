@@ -120,13 +120,12 @@
             <TabItem Header="{Binding MenuSettingsText}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="10">
+                        <TextBlock Text="{Binding Settings.StatusMessage}" Foreground="DarkGreen" TextWrapping="Wrap" Margin="0,0,0,10" />
                         <TextBlock Text="{Binding SettingsCurrentFormatText}" />
                         <ComboBox ItemsSource="{Binding Settings.LogFormats}" SelectedItem="{Binding Settings.LogFormat}" Margin="0,0,0,6" />
-                        <Button Content="Save" Command="{Binding Settings.SaveCommand}" Margin="0,0,0,10" />
 
                         <TextBlock Text="Language" />
                         <ComboBox ItemsSource="{Binding Settings.LanguageOptions}" SelectedItem="{Binding Settings.SelectedLanguage}" Margin="0,0,0,6" />
-                        <Button Content="Apply" Command="{Binding Settings.ChangeLanguageCommand}" Margin="0,0,0,10" />
 
                         <TextBlock Text="Business software" />
                         <ListBox ItemsSource="{Binding Settings.BusinessSoftwareNames}"
@@ -138,6 +137,7 @@
                             <Button Content="Add" Command="{Binding Settings.AddBusinessSoftwareCommand}" Width="60" />
                             <Button Content="Remove" Command="{Binding Settings.RemoveBusinessSoftwareCommand}" Width="70" Margin="6,0,0,0" />
                         </StackPanel>
+                        <Button Content="Apply" Command="{Binding Settings.SaveCommand}" Margin="0,10,0,0" />
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
