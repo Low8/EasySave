@@ -6,5 +6,6 @@ public record BackupResult(
     long FileSize,
     long TransferMs,
     bool Success,
-    bool Skipped = false
+    bool Skipped = false,
+    long EncryptionMs = 0
 );
