@@ -146,6 +146,7 @@ namespace EasySave.GUI.ViewModels
         public string PromptTypeText => _loc.Get("prompt_type");
         public string SettingsCurrentFormatText => _loc.Get("settings_current_format");
         public string SettingsChooseFormatText => _loc.Get("settings_choose_format");
+        public string TabActionsText => _loc.Get("tab_actions");
 
         public MainViewModel(
             BackupService service,
@@ -162,7 +163,7 @@ namespace EasySave.GUI.ViewModels
             _logDir = logDir;
             _statePath = statePath;
 
-            Settings = new SettingsViewModel(settingsRepo, ChangeLanguage, ApplyLogFormat);
+            Settings = new SettingsViewModel(_loc, settingsRepo, ChangeLanguage, ApplyLogFormat);
 
             _service.Attach(this);
 
@@ -210,7 +211,7 @@ namespace EasySave.GUI.ViewModels
             if (!string.IsNullOrWhiteSpace(selectedName))
                 SelectedJob = Jobs.FirstOrDefault(j => j.Name == selectedName);
 
-            StatusMessage = _loc.Get("menu_settings") + " OK";
+            StatusMessage = _loc.Get("menu_settings") + " " + _loc.Get("status_done");
         }
 
         private static IEncryptionService CreateEncryptionService(AppSettings settings)
@@ -236,7 +237,7 @@ namespace EasySave.GUI.ViewModels
             Jobs.Clear();
             var jobs = _service.GetJobs().ToList();
             for (int i = 0; i < jobs.Count; i++)
-                Jobs.Add(new BackupJobViewModel(jobs[i]));
+                Jobs.Add(new BackupJobViewModel(jobs[i], _loc));
             UpdateCommandStates();
         }
 
@@ -271,6 +272,7 @@ namespace EasySave.GUI.ViewModels
                 return;
 
             _loc = new ResourceLocalizationService(culture);
+            Settings.RefreshLocalization(_loc);
             RefreshLocalization();
         }
 
@@ -289,6 +291,10 @@ namespace EasySave.GUI.ViewModels
             OnPropertyChanged(nameof(PromptTypeText));
             OnPropertyChanged(nameof(SettingsCurrentFormatText));
             OnPropertyChanged(nameof(SettingsChooseFormatText));
+            OnPropertyChanged(nameof(TabActionsText));
+
+            foreach (var job in Jobs)
+                job.RefreshLocalization(_loc);
         }
 
         private async void RunSelected()
@@ -299,12 +305,12 @@ namespace EasySave.GUI.ViewModels
 
             var cts = new CancellationTokenSource();
             _cts[index] = cts;
-            StatusMessage = _loc.Get("menu_run") + " ...";
+            StatusMessage = _loc.Get("menu_run") + " " + _loc.Get("status_running");
 
             try
             {
                 await Task.Run(async () => await _service.RunJob(index, cts.Token));
-                StatusMessage = _loc.Get("menu_run") + " OK";
+                StatusMessage = _loc.Get("menu_run") + " " + _loc.Get("status_done");
             }
             finally
             {
@@ -318,11 +324,11 @@ namespace EasySave.GUI.ViewModels
             _runAllCts = new CancellationTokenSource();
 
             var indices = Enumerable.Range(0, Jobs.Count);
-            StatusMessage = _loc.Get("menu_run_all") + " ...";
+            StatusMessage = _loc.Get("menu_run_all") + " " + _loc.Get("status_running");
             try
             {
                 await Task.Run(async () => await _service.RunRange(indices, _runAllCts.Token));
-                StatusMessage = _loc.Get("menu_run_all") + " OK";
+                StatusMessage = _loc.Get("menu_run_all") + " " + _loc.Get("status_done");
             }
             finally
             {
@@ -352,9 +358,9 @@ namespace EasySave.GUI.ViewModels
                 };
 
                 _service.AddJob(config);
-                Jobs.Add(new BackupJobViewModel(config));
+                Jobs.Add(new BackupJobViewModel(config, _loc));
 
-                StatusMessage = _loc.Get("menu_create") + " OK";
+                StatusMessage = _loc.Get("menu_create") + " " + _loc.Get("status_done");
 
                 NewJobName = string.Empty;
                 NewSourceDir = string.Empty;
@@ -391,7 +397,7 @@ namespace EasySave.GUI.ViewModels
 
                 _service.UpdateJob(index, config);
                 SelectedJob.UpdateFromConfig(config);
-                StatusMessage = _loc.Get("menu_edit") + " OK";
+                StatusMessage = _loc.Get("menu_edit") + " " + _loc.Get("status_done");
             }
             catch (Exception ex)
             {
@@ -413,7 +419,7 @@ namespace EasySave.GUI.ViewModels
                 _service.RemoveJob(index);
                 Jobs.RemoveAt(index);
                 SelectedJob = null;
-                StatusMessage = _loc.Get("menu_delete") + " OK";
+                StatusMessage = _loc.Get("menu_delete") + " " + _loc.Get("status_done");
             }
             catch (Exception ex)
             {
