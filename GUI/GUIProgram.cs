@@ -2,6 +2,7 @@
 using EasySave.GUI.ViewModels;
 using EasySave.Localization;
 using EasySave.Models;
+using EasySave.Services.Formatters;
 using EasySave.Services;
 using EasySave.GUI.Repositories;
 using GUI.Views;
@@ -23,11 +24,19 @@ namespace EasySave.GUI
                 ? new JsonLogFormatter()
                 : new XmlLogFormatter();
 
+            IStateFormatter stateFormatter = settings.LogFormat == LogFormat.Json
+                ? new JsonStateFormatter()
+                : new XmlStateFormatter();
+
             var logDir = Path.Combine(solutionRoot, "logs", "daily");
             var logger = new EasyLogger(logDir, formatter);
 
             var configPath = Path.Combine(solutionRoot, "config.json");
             var service = new BackupService(configPath, logger);
+
+            var statePath = Path.Combine(solutionRoot, "logs", "live", "state.json");
+            var stateWriter = new StateFileWriter(statePath, stateFormatter);
+            service.Attach(stateWriter);
 
             var vm = new MainViewModel(service, loc, settingsRepo);
 

@@ -15,17 +15,37 @@
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Border BorderBrush="#DDD" BorderThickness="1" Padding="8" Margin="0,0,0,8">
-                        <StackPanel>
-                            <DockPanel>
+                        <Grid Width="360" HorizontalAlignment="Left">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <DockPanel Grid.Row="0">
                                 <TextBlock Text="{Binding Name}" FontWeight="Bold" DockPanel.Dock="Left" />
                                 <TextBlock Text="{Binding Status}" Foreground="#666" DockPanel.Dock="Right" />
                             </DockPanel>
-                            <TextBlock Text="{Binding SourceDir}" Foreground="#666" />
-                            <TextBlock Text="{Binding TargetDir}" Foreground="#666" />
-                            <TextBlock Text="{Binding Type}" Foreground="#666" />
-                            <ProgressBar Value="{Binding Progress}" Maximum="100" Height="12" Margin="0,6,0,0" />
-                            <CheckBox Content="Active" IsChecked="{Binding IsActive, Mode=OneWay}" IsEnabled="False" />
-                        </StackPanel>
+                            <TextBlock Grid.Row="1" Text="{Binding SourceDir}" Foreground="#666" TextWrapping="Wrap" />
+                            <TextBlock Grid.Row="2" Text="{Binding TargetDir}" Foreground="#666" TextWrapping="Wrap" />
+                            <TextBlock Grid.Row="3" Text="{Binding Type}" Foreground="#666" />
+                            <ProgressBar Grid.Row="4" Value="{Binding Progress}" Maximum="100" Height="12" Margin="0,6,0,0" Width="320" HorizontalAlignment="Left" />
+                            <TextBlock Grid.Row="5" Text="{Binding Progress, StringFormat=Progress: {0:F1}%}" Foreground="#666" />
+                            <TextBlock Grid.Row="6" Text="{Binding RemainingFiles, StringFormat=Remaining files: {0}}" Foreground="#666" />
+                            <TextBlock Grid.Row="7" Text="{Binding RemainingSize, StringFormat=Remaining size: {0} bytes}" Foreground="#666" />
+                            <TextBlock Grid.Row="8" Text="{Binding CurrentFile, StringFormat=Current source: {0}}" Foreground="#666" TextWrapping="Wrap" />
+                            <TextBlock Grid.Row="9" Text="{Binding CurrentDest, StringFormat=Current dest: {0}}" Foreground="#666" TextWrapping="Wrap" />
+                            <TextBlock Grid.Row="10" Text="{Binding LastActionTime, StringFormat=Last update: {0:HH:mm:ss}}" Foreground="#666" />
+                            <CheckBox Grid.Row="11" Content="Active" IsChecked="{Binding IsActive, Mode=OneWay}" IsEnabled="False" />
+                        </Grid>
                     </Border>
                 </DataTemplate>
             </ListBox.ItemTemplate>

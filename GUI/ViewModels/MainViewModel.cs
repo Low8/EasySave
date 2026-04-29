@@ -249,8 +249,10 @@ namespace EasySave.GUI.ViewModels
 
             var cts = new CancellationTokenSource();
             _cts[index] = cts;
+            StatusMessage = _loc.Get("menu_run") + " ...";
 
-            await _service.RunJob(index, cts.Token);
+            await Task.Run(async () => await _service.RunJob(index, cts.Token));
+            StatusMessage = _loc.Get("menu_run") + " OK";
         }
 
         private async void RunAll()
@@ -259,7 +261,9 @@ namespace EasySave.GUI.ViewModels
             _runAllCts = new CancellationTokenSource();
 
             var indices = Enumerable.Range(0, Jobs.Count);
-            await _service.RunRange(indices, _runAllCts.Token);
+            StatusMessage = _loc.Get("menu_run_all") + " ...";
+            await Task.Run(async () => await _service.RunRange(indices, _runAllCts.Token));
+            StatusMessage = _loc.Get("menu_run_all") + " OK";
         }
 
         private void AddJob()
