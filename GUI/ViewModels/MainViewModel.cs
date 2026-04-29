@@ -342,8 +342,19 @@ namespace EasySave.GUI.ViewModels
 
         public void Update(BackupState state)
         {
-            var job = Jobs.FirstOrDefault(j => j.Name == state.Name);
-            job?.UpdateFromState(state);
+            var dispatcher = System.Windows.Application.Current?.Dispatcher;
+            if (dispatcher == null || dispatcher.CheckAccess())
+            {
+                var job = Jobs.FirstOrDefault(j => j.Name == state.Name);
+                job?.UpdateFromState(state);
+                return;
+            }
+
+            dispatcher.Invoke(() =>
+            {
+                var job = Jobs.FirstOrDefault(j => j.Name == state.Name);
+                job?.UpdateFromState(state);
+            });
         }
     }
 }
