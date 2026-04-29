@@ -16,7 +16,8 @@ public class XmlLogFormatter : ILogFormatter
                     new XElement("SourcePath", e.SourcePath),
                     new XElement("DestPath", e.DestPath),
                     new XElement("FileSize", e.FileSize),
-                    new XElement("TransferMs", e.TransferMs)
+                    new XElement("TransferMs", e.TransferMs),
+                    new XElement("EncryptionMs", e.EncryptionMs)
                 ))
             )
         );
@@ -36,7 +37,8 @@ public class XmlLogFormatter : ILogFormatter
                 SourcePath = e.Element("SourcePath")?.Value ?? "",
                 DestPath   = e.Element("DestPath")?.Value ?? "",
                 FileSize   = long.TryParse(e.Element("FileSize")?.Value, out var fs) ? fs : 0,
-                TransferMs = long.TryParse(e.Element("TransferMs")?.Value, out var tm) ? tm : 0
+                TransferMs = long.TryParse(e.Element("TransferMs")?.Value, out var tm) ? tm : 0,
+                EncryptionMs = long.TryParse(e.Element("EncryptionMs")?.Value, out var em) ? em : 0
             }).ToList() ?? [];
         }
         catch { return []; }

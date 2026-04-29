@@ -36,8 +36,6 @@ public class BackupService : IStateSubject
 
     public void AddJob(BackupJobConfig config)
     {
-        if (_jobs.Count >= 5)
-            throw new InvalidOperationException("Maximum 5 jobs allowed");
         _jobs.Add(config);
         _repository.Save(_jobs);
     }
