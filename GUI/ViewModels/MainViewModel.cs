@@ -5,6 +5,8 @@ using EasySave.Services;
 using EasySave.GUI.Repositories;
 using EasySave.Services.Formatters;
 using EasyLog;
+using EasySave.Services.Encryption;
+using EasySave.Services.Guard;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Linq;
@@ -160,7 +162,7 @@ namespace EasySave.GUI.ViewModels
             _logDir = logDir;
             _statePath = statePath;
 
-            Settings = new SettingsViewModel(settingsRepo, "fr", ChangeLanguage, ApplyLogFormat);
+            Settings = new SettingsViewModel(settingsRepo, ChangeLanguage, ApplyLogFormat);
 
             _service.Attach(this);
 
@@ -189,8 +191,11 @@ namespace EasySave.GUI.ViewModels
                 ? new JsonStateFormatter()
                 : new XmlStateFormatter();
 
+            var settings = _settingsRepo.Load();
             var logger = new EasyLogger(_logDir, formatter);
-            var service = new BackupService(_configPath, logger);
+            var encryptionService = CreateEncryptionService(settings);
+            var guard = CreateBusinessSoftwareGuard(settings);
+            var service = new BackupService(_configPath, logger, encryptionService, guard);
 
             service.Attach(this);
 
@@ -206,6 +211,24 @@ namespace EasySave.GUI.ViewModels
                 SelectedJob = Jobs.FirstOrDefault(j => j.Name == selectedName);
 
             StatusMessage = _loc.Get("menu_settings") + " OK";
+        }
+
+        private static IEncryptionService CreateEncryptionService(AppSettings settings)
+        {
+            return !string.IsNullOrWhiteSpace(settings.CryptoSoftPath)
+                && settings.EncryptedExtensions.Count > 0
+                    ? new CryptoSoftEncryptionService(
+                        settings.CryptoSoftPath,
+                        settings.EncryptionKey,
+                        settings.EncryptedExtensions)
+                    : new NoEncryptionService();
+        }
+
+        private static IBusinessSoftwareGuard CreateBusinessSoftwareGuard(AppSettings settings)
+        {
+            return settings.BusinessSoftwareNames.Count > 0
+                ? new ProcessBusinessSoftwareGuard(settings.BusinessSoftwareNames)
+                : new NoBusinessSoftwareGuard();
         }
 
         private void LoadJobs()

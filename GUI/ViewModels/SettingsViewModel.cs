@@ -33,7 +33,11 @@ namespace EasySave.GUI.ViewModels
         public string SelectedLanguage
         {
             get => _selectedLanguage;
-            set => SetProperty(ref _selectedLanguage, value);
+            set
+            {
+                if (SetProperty(ref _selectedLanguage, value))
+                    _settings.Language = value;
+            }
         }
 
         public ICommand SaveCommand { get; }
@@ -41,7 +45,6 @@ namespace EasySave.GUI.ViewModels
 
         public SettingsViewModel(
             IAppSettingsRepository repo,
-            string initialLanguage,
             Action<string> changeLanguage,
             Action<LogFormat> applyLogFormat)
         {
@@ -49,14 +52,19 @@ namespace EasySave.GUI.ViewModels
             _changeLanguage = changeLanguage;
             _applyLogFormat = applyLogFormat;
             _settings = repo.Load();
-            _selectedLanguage = initialLanguage;
+            _selectedLanguage = string.IsNullOrWhiteSpace(_settings.Language) ? "fr" : _settings.Language;
+            _settings.Language = _selectedLanguage;
 
             SaveCommand = new RelayCommand(() =>
             {
                 _repo.Save(_settings);
                 _applyLogFormat?.Invoke(_settings.LogFormat);
             });
-            ChangeLanguageCommand = new RelayCommand(() => _changeLanguage?.Invoke(SelectedLanguage));
+            ChangeLanguageCommand = new RelayCommand(() =>
+            {
+                _repo.Save(_settings);
+                _changeLanguage?.Invoke(SelectedLanguage);
+            });
         }
     }
 }
