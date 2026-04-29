@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Windows.Input;
+using System;
 
 namespace EasySave.GUI.ViewModels
 {
@@ -22,9 +23,10 @@ namespace EasySave.GUI.ViewModels
 
         private RelayCommand _runSelectedCommand;
         private RelayCommand _runAllCommand;
-        private RelayCommand _pauseCommand;
-        private RelayCommand _resumeCommand;
-        private RelayCommand _stopCommand;
+        private RelayCommand _browseNewSourceCommand;
+        private RelayCommand _browseNewTargetCommand;
+        private RelayCommand _browseEditSourceCommand;
+        private RelayCommand _browseEditTargetCommand;
         private RelayCommand _addJobCommand;
         private RelayCommand _updateJobCommand;
         private RelayCommand _removeJobCommand;
@@ -52,9 +54,10 @@ namespace EasySave.GUI.ViewModels
         public ICommand RemoveJobCommand => _removeJobCommand;
         public ICommand RunSelectedCommand => _runSelectedCommand;
         public ICommand RunAllCommand => _runAllCommand;
-        public ICommand PauseCommand => _pauseCommand;
-        public ICommand ResumeCommand => _resumeCommand;
-        public ICommand StopCommand => _stopCommand;
+        public ICommand BrowseNewSourceCommand => _browseNewSourceCommand;
+        public ICommand BrowseNewTargetCommand => _browseNewTargetCommand;
+        public ICommand BrowseEditSourceCommand => _browseEditSourceCommand;
+        public ICommand BrowseEditTargetCommand => _browseEditTargetCommand;
 
         public IReadOnlyList<BackupType> BackupTypes { get; } =
             new List<BackupType> { BackupType.Full, BackupType.Differential };
@@ -167,12 +170,13 @@ namespace EasySave.GUI.ViewModels
 
             _runSelectedCommand = new RelayCommand(RunSelected, () => SelectedJob != null);
             _runAllCommand = new RelayCommand(RunAll, () => Jobs.Any());
-            _pauseCommand = new RelayCommand(Pause, () => SelectedJob != null);
-            _resumeCommand = new RelayCommand(Resume, () => SelectedJob != null);
-            _stopCommand = new RelayCommand(Stop, () => SelectedJob != null);
             _addJobCommand = new RelayCommand(AddJob);
             _updateJobCommand = new RelayCommand(UpdateSelectedJob, () => SelectedJob != null);
             _removeJobCommand = new RelayCommand(RemoveSelectedJob, () => SelectedJob != null);
+            _browseNewSourceCommand = new RelayCommand(() => BrowseFolder(path => NewSourceDir = path));
+            _browseNewTargetCommand = new RelayCommand(() => BrowseFolder(path => NewTargetDir = path));
+            _browseEditSourceCommand = new RelayCommand(() => BrowseFolder(path => EditSourceDir = path));
+            _browseEditTargetCommand = new RelayCommand(() => BrowseFolder(path => EditTargetDir = path));
         }
 
         private void LoadJobs()
@@ -207,9 +211,6 @@ namespace EasySave.GUI.ViewModels
         {
             _runSelectedCommand?.RaiseCanExecuteChanged();
             _runAllCommand?.RaiseCanExecuteChanged();
-            _pauseCommand?.RaiseCanExecuteChanged();
-            _resumeCommand?.RaiseCanExecuteChanged();
-            _stopCommand?.RaiseCanExecuteChanged();
             _updateJobCommand?.RaiseCanExecuteChanged();
             _removeJobCommand?.RaiseCanExecuteChanged();
         }
@@ -332,27 +333,11 @@ namespace EasySave.GUI.ViewModels
             StatusMessage = _loc.Get("menu_delete") + " OK";
         }
 
-        private void Pause()
+        private void BrowseFolder(Action<string> setPath)
         {
-            if (SelectedJob == null) return;
-            SelectedJob.Status = BackupStatus.Paused;
-            SelectedJob.IsPaused = true;
-        }
-
-        private void Resume()
-        {
-            if (SelectedJob == null) return;
-            SelectedJob.Status = BackupStatus.Running;
-            SelectedJob.IsPaused = false;
-        }
-
-        private void Stop()
-        {
-            if (SelectedJob == null) return;
-            int index = Jobs.IndexOf(SelectedJob);
-
-            if (_cts.ContainsKey(index))
-                _cts[index].Cancel();
+            using var dialog = new System.Windows.Forms.FolderBrowserDialog();
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                setPath(dialog.SelectedPath);
         }
 
         public void Update(BackupState state)

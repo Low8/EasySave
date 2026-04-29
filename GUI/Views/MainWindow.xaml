@@ -36,9 +36,6 @@
                     <StackPanel>
                         <Button Content="{Binding MenuRunText}" Command="{Binding RunSelectedCommand}" Margin="0,0,0,4" />
                         <Button Content="{Binding MenuRunAllText}" Command="{Binding RunAllCommand}" Margin="0,0,0,4" />
-                        <Button Content="Pause" Command="{Binding PauseCommand}" Margin="0,0,0,4" />
-                        <Button Content="Resume" Command="{Binding ResumeCommand}" Margin="0,0,0,4" />
-                        <Button Content="Stop" Command="{Binding StopCommand}" Margin="0,0,0,4" />
                         <Button Content="{Binding MenuDeleteText}" Command="{Binding RemoveJobCommand}" />
                     </StackPanel>
                 </GroupBox>
@@ -48,9 +45,15 @@
                         <TextBlock Text="{Binding PromptNameText}" />
                         <TextBox Text="{Binding NewJobName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
                         <TextBlock Text="{Binding PromptSourceText}" />
-                        <TextBox Text="{Binding NewSourceDir, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBox Text="{Binding NewSourceDir, UpdateSourceTrigger=PropertyChanged}" Width="260" Margin="0,0,6,0" />
+                            <Button Content="..." Command="{Binding BrowseNewSourceCommand}" Width="40" />
+                        </StackPanel>
                         <TextBlock Text="{Binding PromptTargetText}" />
-                        <TextBox Text="{Binding NewTargetDir, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBox Text="{Binding NewTargetDir, UpdateSourceTrigger=PropertyChanged}" Width="260" Margin="0,0,6,0" />
+                            <Button Content="..." Command="{Binding BrowseNewTargetCommand}" Width="40" />
+                        </StackPanel>
                         <TextBlock Text="{Binding PromptTypeText}" />
                         <ComboBox ItemsSource="{Binding BackupTypes}" SelectedItem="{Binding NewJobType}" Margin="0,0,0,6" />
                         <CheckBox Content="Active" IsChecked="{Binding NewJobIsActive}" Margin="0,0,0,6" />
@@ -63,9 +66,15 @@
                         <TextBlock Text="{Binding PromptNameText}" />
                         <TextBox Text="{Binding EditJobName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
                         <TextBlock Text="{Binding PromptSourceText}" />
-                        <TextBox Text="{Binding EditSourceDir, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBox Text="{Binding EditSourceDir, UpdateSourceTrigger=PropertyChanged}" Width="260" Margin="0,0,6,0" />
+                            <Button Content="..." Command="{Binding BrowseEditSourceCommand}" Width="40" />
+                        </StackPanel>
                         <TextBlock Text="{Binding PromptTargetText}" />
-                        <TextBox Text="{Binding EditTargetDir, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBox Text="{Binding EditTargetDir, UpdateSourceTrigger=PropertyChanged}" Width="260" Margin="0,0,6,0" />
+                            <Button Content="..." Command="{Binding BrowseEditTargetCommand}" Width="40" />
+                        </StackPanel>
                         <TextBlock Text="{Binding PromptTypeText}" />
                         <ComboBox ItemsSource="{Binding BackupTypes}" SelectedItem="{Binding EditJobType}" Margin="0,0,0,6" />
                         <CheckBox Content="Active" IsChecked="{Binding EditJobIsActive}" Margin="0,0,0,6" />
