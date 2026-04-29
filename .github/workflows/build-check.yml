@@ -1,8 +1,6 @@
 name: Build Check
-
 on:
   pull_request:
-    
 
 jobs:
   build:
@@ -18,5 +16,8 @@ jobs:
       - name: Build
         run: dotnet build EasySave.Console/EasySave.Console.csproj -c Release
 
+      - name: Build Tests
+        run: dotnet build EasySave.Tests/EasySave.Tests.csproj -c Release
+
       - name: Test
-        run: dotnet test --no-build -c Release
+        run: dotnet test EasySave.Tests/EasySave.Tests.csproj -c Release --no-build --logger "console;verbosity=normal"
