@@ -70,4 +70,22 @@ public class DifferentialBackupStrategyTests : IDisposable
         Assert.True(copied);
         Assert.Equal("source content", File.ReadAllText(_destFile));
     }
+
+    [Fact]
+    public void Execute_SkipsFile_WhenTimestampsAreEqual()
+    {
+        // Arrange
+        var timestamp = new DateTime(2025, 1, 1, 12, 0, 0);
+        File.WriteAllText(_sourceFile, "source content");
+        File.WriteAllText(_destFile,   "dest content");
+        File.SetLastWriteTime(_sourceFile, timestamp);
+        File.SetLastWriteTime(_destFile,   timestamp);
+
+        // Act
+        var copied = _strategy.Execute(_sourceFile, _destFile);
+
+        // Assert — la condition est strictement >, pas >=
+        Assert.False(copied);
+        Assert.Equal("dest content", File.ReadAllText(_destFile));
+    }
 }

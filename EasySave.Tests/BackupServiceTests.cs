@@ -78,6 +78,31 @@ public class BackupServiceTests : IDisposable
         Assert.Equal(BackupType.Differential, job.Type);
     }
 
+    [Fact]
+    public void UpdateJob_InvalidIndex_ThrowsArgumentOutOfRangeException()
+    {
+        // Arrange — liste vide
+
+        // Act & Assert
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            _service.UpdateJob(0, new BackupJobConfig { Name = "X" }));
+    }
+
+    [Fact]
+    public void AddJob_PersistsAcrossInstances()
+    {
+        // Arrange
+        _service.AddJob(new BackupJobConfig { Name = "Persistent", SourceDir = @"C:\src", TargetDir = @"C:\dst" });
+
+        // Act — nouvelle instance pointant sur le même configPath
+        var logger2 = new EasyLogger(_logDir, new JsonLogFormatter());
+        var service2 = new BackupService(_configPath, logger2, new NoOpEncryptionService(), new NoOpGuard());
+
+        // Assert
+        Assert.Single(service2.GetJobs());
+        Assert.Equal("Persistent", service2.GetJobs().First().Name);
+    }
+
     private sealed class NoOpEncryptionService : IEncryptionService
     {
         public bool ShouldEncrypt(string filePath) => false;
