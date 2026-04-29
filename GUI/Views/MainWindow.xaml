@@ -126,7 +126,18 @@
 
                         <TextBlock Text="Language" />
                         <ComboBox ItemsSource="{Binding Settings.LanguageOptions}" SelectedItem="{Binding Settings.SelectedLanguage}" Margin="0,0,0,6" />
-                        <Button Content="Apply" Command="{Binding Settings.ChangeLanguageCommand}" />
+                        <Button Content="Apply" Command="{Binding Settings.ChangeLanguageCommand}" Margin="0,0,0,10" />
+
+                        <TextBlock Text="Business software" />
+                        <ListBox ItemsSource="{Binding Settings.BusinessSoftwareNames}"
+                                 SelectedItem="{Binding Settings.SelectedBusinessSoftwareName}"
+                                 Height="120"
+                                 Margin="0,0,0,6" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBox Text="{Binding Settings.NewBusinessSoftwareName, UpdateSourceTrigger=PropertyChanged}" Width="220" Margin="0,0,6,0" />
+                            <Button Content="Add" Command="{Binding Settings.AddBusinessSoftwareCommand}" Width="60" />
+                            <Button Content="Remove" Command="{Binding Settings.RemoveBusinessSoftwareCommand}" Width="70" Margin="6,0,0,0" />
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

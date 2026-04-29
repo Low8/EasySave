@@ -2,6 +2,8 @@
 using EasySave.GUI.Repositories;
 using EasySave.Models;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows.Input;
 
 namespace EasySave.GUI.ViewModels
@@ -13,6 +15,9 @@ namespace EasySave.GUI.ViewModels
         private readonly Action<LogFormat> _applyLogFormat;
         private AppSettings _settings;
         private string _selectedLanguage;
+        private string _newBusinessSoftwareName;
+        private string _selectedBusinessSoftwareName;
+        private RelayCommand _removeBusinessSoftwareCommand;
 
         public LogFormat LogFormat
         {
@@ -40,8 +45,28 @@ namespace EasySave.GUI.ViewModels
             }
         }
 
+        public ObservableCollection<string> BusinessSoftwareNames { get; } = new();
+
+        public string NewBusinessSoftwareName
+        {
+            get => _newBusinessSoftwareName;
+            set => SetProperty(ref _newBusinessSoftwareName, value);
+        }
+
+        public string SelectedBusinessSoftwareName
+        {
+            get => _selectedBusinessSoftwareName;
+            set
+            {
+                if (SetProperty(ref _selectedBusinessSoftwareName, value))
+                    _removeBusinessSoftwareCommand?.RaiseCanExecuteChanged();
+            }
+        }
+
         public ICommand SaveCommand { get; }
         public ICommand ChangeLanguageCommand { get; }
+        public ICommand AddBusinessSoftwareCommand { get; }
+        public ICommand RemoveBusinessSoftwareCommand => _removeBusinessSoftwareCommand;
 
         public SettingsViewModel(
             IAppSettingsRepository repo,
@@ -54,9 +79,12 @@ namespace EasySave.GUI.ViewModels
             _settings = repo.Load();
             _selectedLanguage = string.IsNullOrWhiteSpace(_settings.Language) ? "fr" : _settings.Language;
             _settings.Language = _selectedLanguage;
+            foreach (var name in _settings.BusinessSoftwareNames)
+                BusinessSoftwareNames.Add(name);
 
             SaveCommand = new RelayCommand(() =>
             {
+                SyncBusinessSoftwareNames();
                 _repo.Save(_settings);
                 _applyLogFormat?.Invoke(_settings.LogFormat);
             });
@@ -65,6 +93,40 @@ namespace EasySave.GUI.ViewModels
                 _repo.Save(_settings);
                 _changeLanguage?.Invoke(SelectedLanguage);
             });
+            AddBusinessSoftwareCommand = new RelayCommand(AddBusinessSoftware);
+            _removeBusinessSoftwareCommand = new RelayCommand(RemoveBusinessSoftware, () =>
+                !string.IsNullOrWhiteSpace(SelectedBusinessSoftwareName));
+        }
+
+        private void AddBusinessSoftware()
+        {
+            if (string.IsNullOrWhiteSpace(NewBusinessSoftwareName))
+                return;
+
+            var name = NewBusinessSoftwareName.Trim();
+            if (BusinessSoftwareNames.Contains(name))
+                return;
+
+            BusinessSoftwareNames.Add(name);
+            NewBusinessSoftwareName = string.Empty;
+            SyncBusinessSoftwareNames();
+            _removeBusinessSoftwareCommand?.RaiseCanExecuteChanged();
+        }
+
+        private void RemoveBusinessSoftware()
+        {
+            if (string.IsNullOrWhiteSpace(SelectedBusinessSoftwareName))
+                return;
+
+            BusinessSoftwareNames.Remove(SelectedBusinessSoftwareName);
+            SelectedBusinessSoftwareName = null;
+            SyncBusinessSoftwareNames();
+            _removeBusinessSoftwareCommand?.RaiseCanExecuteChanged();
+        }
+
+        private void SyncBusinessSoftwareNames()
+        {
+            _settings.BusinessSoftwareNames = BusinessSoftwareNames.ToList();
         }
     }
 }

@@ -10,5 +10,5 @@ public class AppSettings
     public string CryptoSoftPath { get; set; } = string.Empty;
     public string EncryptionKey { get; set; } = string.Empty;
     public IReadOnlyList<string> EncryptedExtensions { get; set; } = [];
-    public IReadOnlyList<string> BusinessSoftwareNames { get; set; } = [];
+    public List<string> BusinessSoftwareNames { get; set; } = [];
 }
