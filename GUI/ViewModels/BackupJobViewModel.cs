@@ -1,10 +1,12 @@
-﻿using EasySave.Models;
+﻿using EasySave.Localization;
+using EasySave.Models;
 
 namespace EasySave.GUI.ViewModels
 {
     public class BackupJobViewModel : ViewModelBase
     {
         private readonly BackupJobConfig _config;
+        private ILocalizationService _loc;
 
         public string Name => _config.Name;
         public string SourceDir => _config.SourceDir;
@@ -19,8 +21,11 @@ namespace EasySave.GUI.ViewModels
                     return;
                 _config.IsActive = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(IsActiveText));
             }
         }
+
+        public string IsActiveText => _loc.Get(IsActive ? "job_active" : "job_inactive");
 
         private float _progress;
         public float Progress { get => _progress; set => SetProperty(ref _progress, value); }
@@ -55,9 +60,29 @@ namespace EasySave.GUI.ViewModels
         private bool _isPaused;
         public bool IsPaused { get => _isPaused; set => SetProperty(ref _isPaused, value); }
 
-        public BackupJobViewModel(BackupJobConfig config)
+        public string ProgressText       => string.Format(_loc.Get("job_progress"), Progress);
+        public string RemainingFilesText => string.Format(_loc.Get("job_remaining_files"), RemainingFiles);
+        public string RemainingSizeText  => string.Format(_loc.Get("job_remaining_size"), RemainingSize);
+        public string CurrentSourceText  => string.Format(_loc.Get("job_current_source"), CurrentFile);
+        public string CurrentDestText    => string.Format(_loc.Get("job_current_dest"), CurrentDest);
+        public string LastUpdateText     => string.Format(_loc.Get("job_last_update"), LastActionTime);
+
+        public BackupJobViewModel(BackupJobConfig config, ILocalizationService loc)
         {
             _config = config;
+            _loc = loc;
+        }
+
+        public void RefreshLocalization(ILocalizationService loc)
+        {
+            _loc = loc;
+            OnPropertyChanged(nameof(IsActiveText));
+            OnPropertyChanged(nameof(ProgressText));
+            OnPropertyChanged(nameof(RemainingFilesText));
+            OnPropertyChanged(nameof(RemainingSizeText));
+            OnPropertyChanged(nameof(CurrentSourceText));
+            OnPropertyChanged(nameof(CurrentDestText));
+            OnPropertyChanged(nameof(LastUpdateText));
         }
 
         public void UpdateFromConfig(BackupJobConfig config)
@@ -89,6 +114,13 @@ namespace EasySave.GUI.ViewModels
             LastFileSkipped = state.LastFileSkipped;
             IsPaused = state.Status == BackupStatus.Paused;
             IsActive = state.Status == BackupStatus.Running;
+
+            OnPropertyChanged(nameof(ProgressText));
+            OnPropertyChanged(nameof(RemainingFilesText));
+            OnPropertyChanged(nameof(RemainingSizeText));
+            OnPropertyChanged(nameof(CurrentSourceText));
+            OnPropertyChanged(nameof(CurrentDestText));
+            OnPropertyChanged(nameof(LastUpdateText));
         }
     }
 }

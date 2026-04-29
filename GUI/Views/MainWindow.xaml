@@ -38,20 +38,18 @@
                             <TextBlock Grid.Row="2" Text="{Binding TargetDir}" Foreground="#666" TextWrapping="Wrap" />
                             <TextBlock Grid.Row="3" Text="{Binding Type}" Foreground="#666" />
                             <ProgressBar Grid.Row="4" Value="{Binding Progress}" Maximum="100" Height="12" Margin="0,6,0,0" Width="320" HorizontalAlignment="Left" />
-                            <TextBlock Grid.Row="5" Text="{Binding Progress, StringFormat=Progress: {0:F1}%}" Foreground="#666" />
-                            <TextBlock Grid.Row="6" Text="{Binding RemainingFiles, StringFormat=Remaining files: {0}}" Foreground="#666" />
-                            <TextBlock Grid.Row="7" Text="{Binding RemainingSize, StringFormat=Remaining size: {0} bytes}" Foreground="#666" />
-                            <TextBlock Grid.Row="8" Text="{Binding CurrentFile, StringFormat=Current source: {0}}" Foreground="#666" TextWrapping="Wrap" />
-                            <TextBlock Grid.Row="9" Text="{Binding CurrentDest, StringFormat=Current dest: {0}}" Foreground="#666" TextWrapping="Wrap" />
-                            <TextBlock Grid.Row="10" Text="{Binding LastActionTime, StringFormat=Last update: {0:HH:mm:ss}}" Foreground="#666" />
-                            <TextBlock Grid.Row="11">
+                            <TextBlock Grid.Row="5" Text="{Binding ProgressText}" Foreground="#666" />
+                            <TextBlock Grid.Row="6" Text="{Binding RemainingFilesText}" Foreground="#666" />
+                            <TextBlock Grid.Row="7" Text="{Binding RemainingSizeText}" Foreground="#666" />
+                            <TextBlock Grid.Row="8" Text="{Binding CurrentSourceText}" Foreground="#666" TextWrapping="Wrap" />
+                            <TextBlock Grid.Row="9" Text="{Binding CurrentDestText}" Foreground="#666" TextWrapping="Wrap" />
+                            <TextBlock Grid.Row="10" Text="{Binding LastUpdateText}" Foreground="#666" />
+                            <TextBlock Grid.Row="11" Text="{Binding IsActiveText}">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
-                                        <Setter Property="Text" Value="Inactive" />
                                         <Setter Property="Foreground" Value="#999" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                                <Setter Property="Text" Value="Active" />
                                                 <Setter Property="Foreground" Value="Green" />
                                             </DataTrigger>
                                         </Style.Triggers>
@@ -65,7 +63,7 @@
         </ListBox>
 
         <TabControl Grid.Column="1">
-            <TabItem Header="Actions">
+            <TabItem Header="{Binding TabActionsText}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="10">
                         <TextBlock Text="{Binding StatusMessage}" Foreground="DarkGreen" TextWrapping="Wrap" Margin="0,0,0,10" />
@@ -124,30 +122,30 @@
                         <TextBlock Text="{Binding SettingsCurrentFormatText}" />
                         <ComboBox ItemsSource="{Binding Settings.LogFormats}" SelectedItem="{Binding Settings.LogFormat}" Margin="0,0,0,6" />
 
-                        <TextBlock Text="Language" />
+                        <TextBlock Text="{Binding Settings.SettingsLanguageText}" />
                         <ComboBox ItemsSource="{Binding Settings.LanguageOptions}" SelectedItem="{Binding Settings.SelectedLanguage}" Margin="0,0,0,6" />
 
-                        <TextBlock Text="Business software" />
+                        <TextBlock Text="{Binding Settings.SettingsBusinessSoftText}" />
                         <ListBox ItemsSource="{Binding Settings.BusinessSoftwareNames}"
                                  SelectedItem="{Binding Settings.SelectedBusinessSoftwareName}"
                                  Height="120"
                                  Margin="0,0,0,6" />
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                             <TextBox Text="{Binding Settings.NewBusinessSoftwareName, UpdateSourceTrigger=PropertyChanged}" Width="220" Margin="0,0,6,0" />
-                            <Button Content="Add" Command="{Binding Settings.AddBusinessSoftwareCommand}" Width="60" />
-                            <Button Content="Remove" Command="{Binding Settings.RemoveBusinessSoftwareCommand}" Width="70" Margin="6,0,0,0" />
+                            <Button Content="{Binding Settings.ButtonAddText}"    Command="{Binding Settings.AddBusinessSoftwareCommand}"    Width="60" />
+                            <Button Content="{Binding Settings.ButtonRemoveText}" Command="{Binding Settings.RemoveBusinessSoftwareCommand}" Width="70" Margin="6,0,0,0" />
                         </StackPanel>
-                        <TextBlock Text="Extensions chiffrées (ex: .txt, .docx)" />
+                        <TextBlock Text="{Binding Settings.SettingsEncryptedExtText}" />
                         <ListBox ItemsSource="{Binding Settings.EncryptedExtensions}"
                                  SelectedItem="{Binding Settings.SelectedEncryptedExtension}"
                                  Height="120"
                                  Margin="0,0,0,6" />
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                             <TextBox Text="{Binding Settings.NewEncryptedExtension, UpdateSourceTrigger=PropertyChanged}" Width="220" Margin="0,0,6,0" />
-                            <Button Content="Add"    Command="{Binding Settings.AddEncryptedExtensionCommand}"    Width="60" />
-                            <Button Content="Remove" Command="{Binding Settings.RemoveEncryptedExtensionCommand}" Width="70" Margin="6,0,0,0" />
+                            <Button Content="{Binding Settings.ButtonAddText}"    Command="{Binding Settings.AddEncryptedExtensionCommand}"    Width="60" />
+                            <Button Content="{Binding Settings.ButtonRemoveText}" Command="{Binding Settings.RemoveEncryptedExtensionCommand}" Width="70" Margin="6,0,0,0" />
                         </StackPanel>
-                        <Button Content="Apply" Command="{Binding Settings.SaveCommand}" Margin="0,10,0,0" />
+                        <Button Content="{Binding Settings.ButtonApplyText}" Command="{Binding Settings.SaveCommand}" Margin="0,10,0,0" />
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
