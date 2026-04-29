@@ -8,5 +8,5 @@ public class LogEntry
     public string DestPath { get; set; } = string.Empty;
     public long FileSize { get; set; }
     public long TransferMs { get; set; }
-    public long EncryptionMs { get; set; }  
-}    
+    public long EncryptionMs { get; set; }
+}

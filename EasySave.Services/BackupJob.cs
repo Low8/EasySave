@@ -1,4 +1,5 @@
 using EasySave.Models;
+using EasySave.Services.Encryption;
 using EasySave.Services.Interfaces;
 
 namespace EasySave.Services;
@@ -7,11 +8,13 @@ public class BackupJob
 {
     private readonly BackupJobConfig _config;
     private readonly IBackupStrategy _strategy;
+    private readonly IEncryptionService _encryptionService;
 
-    public BackupJob(BackupJobConfig config, IBackupStrategy strategy)
+    public BackupJob(BackupJobConfig config, IBackupStrategy strategy, IEncryptionService encryptionService)
     {
         _config = config;
         _strategy = strategy;
+        _encryptionService = encryptionService;
     }
 
     public async IAsyncEnumerable<BackupResult> Execute(
@@ -47,8 +50,21 @@ public class BackupJob
                 continue;
             }
 
+            long encryptionMs = 0;
+            bool encryptionFailed = false;
+            if (copied)
+            {
+                encryptionMs = _encryptionService.Encrypt(destFile);
+                encryptionFailed = encryptionMs < 0;
+            }
+
             var fileSize = new FileInfo(destFile).Length;
-            yield return new BackupResult(sourceFile, destFile, fileSize, sw.ElapsedMilliseconds, true, Skipped: !copied);
+            yield return new BackupResult(
+                sourceFile, destFile,
+                fileSize, sw.ElapsedMilliseconds,
+                Success: !encryptionFailed,
+                Skipped: !copied,
+                EncryptionMs: encryptionMs);
         }
     }
 }

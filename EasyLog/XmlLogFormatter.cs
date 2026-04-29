@@ -36,8 +36,8 @@ public class XmlLogFormatter : ILogFormatter
                 BackupName = e.Element("BackupName")?.Value ?? "",
                 SourcePath = e.Element("SourcePath")?.Value ?? "",
                 DestPath   = e.Element("DestPath")?.Value ?? "",
-                FileSize   = long.TryParse(e.Element("FileSize")?.Value, out var fs) ? fs : 0,
-                TransferMs = long.TryParse(e.Element("TransferMs")?.Value, out var tm) ? tm : 0,
+                FileSize     = long.TryParse(e.Element("FileSize")?.Value, out var fs) ? fs : 0,
+                TransferMs   = long.TryParse(e.Element("TransferMs")?.Value, out var tm) ? tm : 0,
                 EncryptionMs = long.TryParse(e.Element("EncryptionMs")?.Value, out var em) ? em : 0
             }).ToList() ?? [];
         }
