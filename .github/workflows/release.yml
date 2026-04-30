@@ -1,5 +1,4 @@
 name: Release
-
 on:
   push:
     tags:
@@ -9,10 +8,9 @@ on:
       tag:
         description: 'Tag (ex: v1.1.1)'
         required: true
-
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     permissions:
       contents: write
     steps:
@@ -23,20 +21,12 @@ jobs:
         with:
           dotnet-version: '10.x'
 
-      - name: Build Windows
-        run: dotnet publish EasySave.Console/EasySave.Console.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./out/windows
-
-      - name: Build Linux
-        run: dotnet publish EasySave.Console/EasySave.Console.csproj -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -o ./out/linux
-
-      - name: Build macOS
-        run: dotnet publish EasySave.Console/EasySave.Console.csproj -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true -o ./out/macos
+      - name: Build GUI Windows
+        run: dotnet publish GUI/GUI.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./out/windows
 
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag || github.ref_name }}
           files: |
-            ./out/windows/EasySave.exe
-            ./out/linux/EasySave
-            ./out/macos/EasySave
+            ./out/windows/GUI.exe
