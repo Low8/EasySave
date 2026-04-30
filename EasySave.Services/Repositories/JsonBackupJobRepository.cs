@@ -20,8 +20,16 @@ public class JsonBackupJobRepository : IBackupJobRepository
     {
         if (!File.Exists(_configPath))
             return [];
-        var json = File.ReadAllText(_configPath);
-        return JsonSerializer.Deserialize<List<BackupJobConfig>>(json) ?? [];
+        try
+        {
+            var json = File.ReadAllText(_configPath);
+            return JsonSerializer.Deserialize<List<BackupJobConfig>>(json) ?? [];
+        }
+        catch
+        {
+            // If the config file is corrupted or unreadable, treat as empty set.
+            return [];
+        }
     }
 
     public void Save(IEnumerable<BackupJobConfig> jobs)
