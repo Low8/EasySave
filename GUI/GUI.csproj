@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EasyLog\EasyLog.csproj" />
+    <ProjectReference Include="..\EasySave.Localization\EasySave.Localization.csproj" />
+    <ProjectReference Include="..\EasySave.Models\EasySave.Models.csproj" />
+    <ProjectReference Include="..\EasySave.Services\EasySave.Services.csproj" />
+  </ItemGroup>
+
+</Project>

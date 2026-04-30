@@ -6,5 +6,6 @@ public enum BackupStatus
     Running,
     Paused,
     Completed,
+    Interrupted,
     Error
 }

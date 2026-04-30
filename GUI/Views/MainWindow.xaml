@@ -1,0 +1,154 @@
+﻿<Window x:Class="GUI.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{Binding MenuTitleText}" Height="720" Width="1100">
+
+    <Grid Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="3*" />
+        </Grid.ColumnDefinitions>
+
+        <ListBox ItemsSource="{Binding Jobs}"
+                 SelectedItem="{Binding SelectedJob}"
+                 Margin="0,0,10,0">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Border BorderBrush="#DDD" BorderThickness="1" Padding="8" Margin="0,0,0,8">
+                        <Grid Width="360" HorizontalAlignment="Left">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <DockPanel Grid.Row="0">
+                                <TextBlock Text="{Binding Name}" FontWeight="Bold" DockPanel.Dock="Left" />
+                                <TextBlock Text="{Binding Status}" Foreground="#666" DockPanel.Dock="Right" />
+                            </DockPanel>
+                            <TextBlock Grid.Row="1" Text="{Binding SourceDir}" Foreground="#666" TextWrapping="Wrap" />
+                            <TextBlock Grid.Row="2" Text="{Binding TargetDir}" Foreground="#666" TextWrapping="Wrap" />
+                            <TextBlock Grid.Row="3" Text="{Binding Type}" Foreground="#666" />
+                            <ProgressBar Grid.Row="4" Value="{Binding Progress}" Maximum="100" Height="12" Margin="0,6,0,0" Width="320" HorizontalAlignment="Left" />
+                            <TextBlock Grid.Row="5" Text="{Binding ProgressText}" Foreground="#666" />
+                            <TextBlock Grid.Row="6" Text="{Binding RemainingFilesText}" Foreground="#666" />
+                            <TextBlock Grid.Row="7" Text="{Binding RemainingSizeText}" Foreground="#666" />
+                            <TextBlock Grid.Row="8" Text="{Binding CurrentSourceText}" Foreground="#666" TextWrapping="Wrap" />
+                            <TextBlock Grid.Row="9" Text="{Binding CurrentDestText}" Foreground="#666" TextWrapping="Wrap" />
+                            <TextBlock Grid.Row="10" Text="{Binding LastUpdateText}" Foreground="#666" />
+                            <TextBlock Grid.Row="11" Text="{Binding IsActiveText}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#999" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                <Setter Property="Foreground" Value="Green" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <TabControl Grid.Column="1">
+            <TabItem Header="{Binding TabActionsText}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="10">
+                        <TextBlock Text="{Binding StatusMessage}" Foreground="DarkGreen" TextWrapping="Wrap" Margin="0,0,0,10" />
+                        <Button Content="{Binding MenuRunText}" Command="{Binding RunSelectedCommand}" Margin="0,0,0,6" />
+                        <Button Content="{Binding MenuRunAllText}" Command="{Binding RunAllCommand}" Margin="0,0,0,6" />
+                        <Button Content="{Binding MenuDeleteText}" Command="{Binding RemoveJobCommand}" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="{Binding MenuCreateText}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="10">
+                        <TextBlock Text="{Binding PromptNameText}" />
+                        <TextBox Text="{Binding NewJobName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                        <TextBlock Text="{Binding PromptSourceText}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBox Text="{Binding NewSourceDir, UpdateSourceTrigger=PropertyChanged}" Width="260" Margin="0,0,6,0" />
+                            <Button Content="..." Command="{Binding BrowseNewSourceCommand}" Width="40" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding PromptTargetText}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBox Text="{Binding NewTargetDir, UpdateSourceTrigger=PropertyChanged}" Width="260" Margin="0,0,6,0" />
+                            <Button Content="..." Command="{Binding BrowseNewTargetCommand}" Width="40" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding PromptTypeText}" />
+                        <ComboBox ItemsSource="{Binding BackupTypes}" SelectedItem="{Binding NewJobType}" Margin="0,0,0,6" />
+                        <Button Content="{Binding MenuCreateText}" Command="{Binding AddJobCommand}" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="{Binding MenuEditText}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="10">
+                        <TextBlock Text="{Binding PromptNameText}" />
+                        <TextBox Text="{Binding EditJobName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                        <TextBlock Text="{Binding PromptSourceText}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBox Text="{Binding EditSourceDir, UpdateSourceTrigger=PropertyChanged}" Width="260" Margin="0,0,6,0" />
+                            <Button Content="..." Command="{Binding BrowseEditSourceCommand}" Width="40" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding PromptTargetText}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBox Text="{Binding EditTargetDir, UpdateSourceTrigger=PropertyChanged}" Width="260" Margin="0,0,6,0" />
+                            <Button Content="..." Command="{Binding BrowseEditTargetCommand}" Width="40" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding PromptTypeText}" />
+                        <ComboBox ItemsSource="{Binding BackupTypes}" SelectedItem="{Binding EditJobType}" Margin="0,0,0,6" />
+                        <Button Content="{Binding MenuEditText}" Command="{Binding UpdateJobCommand}" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="{Binding MenuSettingsText}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="10">
+                        <TextBlock Text="{Binding Settings.StatusMessage}" Foreground="DarkGreen" TextWrapping="Wrap" Margin="0,0,0,10" />
+                        <TextBlock Text="{Binding SettingsCurrentFormatText}" />
+                        <ComboBox ItemsSource="{Binding Settings.LogFormats}" SelectedItem="{Binding Settings.LogFormat}" Margin="0,0,0,6" />
+
+                        <TextBlock Text="{Binding Settings.SettingsLanguageText}" />
+                        <ComboBox ItemsSource="{Binding Settings.LanguageOptions}" SelectedItem="{Binding Settings.SelectedLanguage}" Margin="0,0,0,6" />
+
+                        <TextBlock Text="{Binding Settings.SettingsBusinessSoftText}" />
+                        <ListBox ItemsSource="{Binding Settings.BusinessSoftwareNames}"
+                                 SelectedItem="{Binding Settings.SelectedBusinessSoftwareName}"
+                                 Height="120"
+                                 Margin="0,0,0,6" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBox Text="{Binding Settings.NewBusinessSoftwareName, UpdateSourceTrigger=PropertyChanged}" Width="220" Margin="0,0,6,0" />
+                            <Button Content="{Binding Settings.ButtonAddText}"    Command="{Binding Settings.AddBusinessSoftwareCommand}"    Width="60" />
+                            <Button Content="{Binding Settings.ButtonRemoveText}" Command="{Binding Settings.RemoveBusinessSoftwareCommand}" Width="70" Margin="6,0,0,0" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding Settings.SettingsEncryptedExtText}" />
+                        <ListBox ItemsSource="{Binding Settings.EncryptedExtensions}"
+                                 SelectedItem="{Binding Settings.SelectedEncryptedExtension}"
+                                 Height="120"
+                                 Margin="0,0,0,6" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBox Text="{Binding Settings.NewEncryptedExtension, UpdateSourceTrigger=PropertyChanged}" Width="220" Margin="0,0,6,0" />
+                            <Button Content="{Binding Settings.ButtonAddText}"    Command="{Binding Settings.AddEncryptedExtensionCommand}"    Width="60" />
+                            <Button Content="{Binding Settings.ButtonRemoveText}" Command="{Binding Settings.RemoveEncryptedExtensionCommand}" Width="70" Margin="6,0,0,0" />
+                        </StackPanel>
+                        <Button Content="{Binding Settings.ButtonApplyText}" Command="{Binding Settings.SaveCommand}" Margin="0,10,0,0" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

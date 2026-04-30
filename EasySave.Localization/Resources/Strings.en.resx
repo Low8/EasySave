@@ -180,4 +180,64 @@
   <data name="settings_invalid" xml:space="preserve">
     <value>Invalid choice.</value>
   </data>
+  <data name="tab_actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="settings_language" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="settings_business_software" xml:space="preserve">
+    <value>Business software</value>
+  </data>
+  <data name="settings_encrypted_extensions" xml:space="preserve">
+    <value>Encrypted extensions (e.g. .txt)</value>
+  </data>
+  <data name="button_add" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="button_remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="button_apply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="status_applied" xml:space="preserve">
+    <value>Applied</value>
+  </data>
+  <data name="status_added" xml:space="preserve">
+    <value>Added</value>
+  </data>
+  <data name="status_removed" xml:space="preserve">
+    <value>Removed</value>
+  </data>
+  <data name="status_running" xml:space="preserve">
+    <value>Running...</value>
+  </data>
+  <data name="status_done" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="job_active" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="job_inactive" xml:space="preserve">
+    <value>Inactive</value>
+  </data>
+  <data name="job_progress" xml:space="preserve">
+    <value>Progress: {0:F1}%</value>
+  </data>
+  <data name="job_remaining_files" xml:space="preserve">
+    <value>Remaining files: {0}</value>
+  </data>
+  <data name="job_remaining_size" xml:space="preserve">
+    <value>Remaining size: {0} bytes</value>
+  </data>
+  <data name="job_current_source" xml:space="preserve">
+    <value>Current source: {0}</value>
+  </data>
+  <data name="job_current_dest" xml:space="preserve">
+    <value>Current dest: {0}</value>
+  </data>
+  <data name="job_last_update" xml:space="preserve">
+    <value>Last update: {0:HH:mm:ss}</value>
+  </data>
 </root>

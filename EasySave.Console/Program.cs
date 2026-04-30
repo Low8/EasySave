@@ -1,6 +1,8 @@
 using System.Text.Json;
 using EasySave.Services;
+using EasySave.Services.Encryption;
 using EasySave.Services.Formatters;
+using EasySave.Services.Guard;
 using EasySave.Localization;
 using EasySave.Models;
 using EasyLog;
@@ -41,8 +43,22 @@ class Program
         var logDir = Path.Combine(solutionRoot, "logs", "daily");
         var logger = new EasyLogger(logDir, logFormatter);
 
+        IEncryptionService encryptionService =
+            !string.IsNullOrWhiteSpace(appSettings.CryptoSoftPath)
+            && appSettings.EncryptedExtensions.Count > 0
+                ? new CryptoSoftEncryptionService(
+                    appSettings.CryptoSoftPath,
+                    appSettings.EncryptionKey,
+                    appSettings.EncryptedExtensions)
+                : new NoEncryptionService();
+
+        IBusinessSoftwareGuard guard =
+            appSettings.BusinessSoftwareNames.Count > 0
+                ? new ProcessBusinessSoftwareGuard(appSettings.BusinessSoftwareNames)
+                : new NoBusinessSoftwareGuard();
+
         var configPath = Path.Combine(solutionRoot, "config.json");
-        var service = new BackupService(configPath, logger);
+        var service = new BackupService(configPath, logger, encryptionService, guard);
 
         var observer = new ConsoleObserver(loc);
         service.Attach(observer);

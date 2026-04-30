@@ -180,4 +180,64 @@
   <data name="settings_invalid" xml:space="preserve">
     <value>Choix invalide.</value>
   </data>
+  <data name="tab_actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="settings_language" xml:space="preserve">
+    <value>Langue</value>
+  </data>
+  <data name="settings_business_software" xml:space="preserve">
+    <value>Logiciels métier</value>
+  </data>
+  <data name="settings_encrypted_extensions" xml:space="preserve">
+    <value>Extensions chiffrées (ex : .txt)</value>
+  </data>
+  <data name="button_add" xml:space="preserve">
+    <value>Ajouter</value>
+  </data>
+  <data name="button_remove" xml:space="preserve">
+    <value>Supprimer</value>
+  </data>
+  <data name="button_apply" xml:space="preserve">
+    <value>Appliquer</value>
+  </data>
+  <data name="status_applied" xml:space="preserve">
+    <value>Appliqué</value>
+  </data>
+  <data name="status_added" xml:space="preserve">
+    <value>Ajouté</value>
+  </data>
+  <data name="status_removed" xml:space="preserve">
+    <value>Supprimé</value>
+  </data>
+  <data name="status_running" xml:space="preserve">
+    <value>En cours...</value>
+  </data>
+  <data name="status_done" xml:space="preserve">
+    <value>Terminé</value>
+  </data>
+  <data name="job_active" xml:space="preserve">
+    <value>Actif</value>
+  </data>
+  <data name="job_inactive" xml:space="preserve">
+    <value>Inactif</value>
+  </data>
+  <data name="job_progress" xml:space="preserve">
+    <value>Progression : {0:F1} %</value>
+  </data>
+  <data name="job_remaining_files" xml:space="preserve">
+    <value>Fichiers restants : {0}</value>
+  </data>
+  <data name="job_remaining_size" xml:space="preserve">
+    <value>Taille restante : {0} octets</value>
+  </data>
+  <data name="job_current_source" xml:space="preserve">
+    <value>Source en cours : {0}</value>
+  </data>
+  <data name="job_current_dest" xml:space="preserve">
+    <value>Destination en cours : {0}</value>
+  </data>
+  <data name="job_last_update" xml:space="preserve">
+    <value>Dernière mise à jour : {0:HH:mm:ss}</value>
+  </data>
 </root>
