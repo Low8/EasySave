@@ -2,9 +2,7 @@ using EasySave.GUI.Commands;
 using EasySave.GUI.Repositories;
 using EasySave.Localization;
 using EasySave.Models;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Windows.Input;
 
 namespace EasySave.GUI.ViewModels

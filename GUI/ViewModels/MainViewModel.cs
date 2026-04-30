@@ -8,11 +8,7 @@ using EasySave.Services.Guard;
 using EasySave.GUI.Repositories;
 using EasyLog;
 using System.Collections.ObjectModel;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Windows.Input;
-using System;
 
 namespace EasySave.GUI.ViewModels
 {
