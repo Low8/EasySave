@@ -54,8 +54,9 @@ public class BackupJob
             bool encryptionFailed = false;
             if (copied)
             {
-                encryptionMs = _encryptionService.Encrypt(destFile);
-                encryptionFailed = encryptionMs < 0;
+                var (encryptionSuccess, encryptionElapsed) = _encryptionService.Encrypt(destFile);
+                encryptionFailed = !encryptionSuccess;
+                encryptionMs = encryptionElapsed;
             }
 
             var fileSize = new FileInfo(destFile).Length;

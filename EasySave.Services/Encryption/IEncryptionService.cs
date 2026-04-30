@@ -4,9 +4,9 @@ public interface IEncryptionService
 {
     /// <summary>
     /// Encrypts the file at the given path.
-    /// Returns: 0 if not applicable, >0 if encrypted (ms), <0 if error.
+    /// Returns Success=true if encryption succeeded or was not needed, EncryptionMs=real elapsed time (0 if skipped).
     /// </summary>
-    long Encrypt(string filePath);
+    (bool Success, long EncryptionMs) Encrypt(string filePath);
 
     /// <summary>
     /// Returns true if the file extension should be encrypted.

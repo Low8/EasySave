@@ -106,7 +106,7 @@ public class BackupServiceTests : IDisposable
     private sealed class NoOpEncryptionService : IEncryptionService
     {
         public bool ShouldEncrypt(string filePath) => false;
-        public long Encrypt(string filePath) => 0;
+        public (bool Success, long EncryptionMs) Encrypt(string filePath) => (true, 0);
     }
 
     private sealed class NoOpGuard : IBusinessSoftwareGuard

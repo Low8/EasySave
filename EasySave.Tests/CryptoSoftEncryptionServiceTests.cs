@@ -51,4 +51,38 @@ public class CryptoSoftEncryptionServiceTests
         // Assert
         Assert.False(result);
     }
+
+    [Fact]
+    public void Encrypt_ReturnsSuccessZero_WhenExtensionNotTargeted()
+    {
+        // Arrange — .pdf n'est pas dans la liste, Process.Start ne doit pas être appelé
+        var service = new CryptoSoftEncryptionService(
+            cryptoSoftPath: @"C:\tools\CryptoSoft.exe",
+            encryptionKey: "key",
+            encryptedExtensions: [".txt"]);
+
+        // Act
+        var (success, ms) = service.Encrypt("image.pdf");
+
+        // Assert
+        Assert.True(success);
+        Assert.Equal(0, ms);
+    }
+
+    [Fact]
+    public void Encrypt_ReturnsFailureZero_WhenCryptoSoftPathDoesNotExist()
+    {
+        // Arrange — extension ciblée mais exécutable absent → échec sans lancer de processus
+        var service = new CryptoSoftEncryptionService(
+            cryptoSoftPath: @"C:\nonexistent\CryptoSoft.exe",
+            encryptionKey: "key",
+            encryptedExtensions: [".txt"]);
+
+        // Act
+        var (success, ms) = service.Encrypt("document.txt");
+
+        // Assert
+        Assert.False(success);
+        Assert.Equal(0, ms);
+    }
 }
