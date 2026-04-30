@@ -26,10 +26,10 @@ public class CryptoSoftEncryptionService : IEncryptionService
         return _encryptedExtensions.Contains(ext);
     }
 
-    public long Encrypt(string filePath)
+    public (bool Success, long EncryptionMs) Encrypt(string filePath)
     {
-        if (!ShouldEncrypt(filePath)) return 0;
-        if (!File.Exists(_cryptoSoftPath)) return -1;
+        if (!ShouldEncrypt(filePath)) return (true, 0);
+        if (!File.Exists(_cryptoSoftPath)) return (false, 0);
 
         try
         {
@@ -42,16 +42,19 @@ public class CryptoSoftEncryptionService : IEncryptionService
             psi.ArgumentList.Add(filePath);
             psi.ArgumentList.Add(_encryptionKey);
 
+            var sw = Stopwatch.StartNew();
             using var process = Process.Start(psi);
-            if (process is null) return -1;
+            if (process is null) { sw.Stop(); return (false, 0); }
 
             process.WaitForExit();
-            return process.ExitCode;
+            sw.Stop();
+
+            return (Success: process.ExitCode == 0, EncryptionMs: sw.ElapsedMilliseconds);
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"[CryptoSoft] Error encrypting '{filePath}': {ex.Message}");
-            return -99;
+            return (false, 0);
         }
     }
 }
