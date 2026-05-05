@@ -4,7 +4,6 @@
   "CryptoSoftPath": "tools\\CryptoSoft.exe",
   "EncryptionKey": "easysave",
   "EncryptedExtensions": [
-    ".pdf",
     ".jpg"
   ],
   "BusinessSoftwareNames": [

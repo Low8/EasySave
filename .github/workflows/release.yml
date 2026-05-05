@@ -21,12 +21,27 @@ jobs:
         with:
           dotnet-version: '10.x'
 
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Run tests
+        run: dotnet test --configuration Release --no-build --verbosity normal --logger "console;verbosity=detailed"
+
       - name: Build GUI Windows
         run: dotnet publish GUI/GUI.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./out/windows
 
-      - name: Release
+      - name: Verify build output
+        run: |
+          if (-not (Test-Path "./out/windows/GUI.exe")) {
+            Write-Error "GUI.exe not found after build!"
+            exit 1
+          }
+          Write-Host "✓ Build output verified successfully"
+
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag || github.ref_name }}
-          files: |
-            ./out/windows/GUI.exe
+          files: ./out/windows/GUI.exe
+          draft: false
+          prerelease: false
