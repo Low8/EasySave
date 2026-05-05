@@ -52,7 +52,7 @@ public class BackupJob
 
             long encryptionMs = 0;
             bool encryptionFailed = false;
-            if (copied)
+            if (copied && _encryptionService.ShouldEncrypt(destFile))
             {
                 var (encryptionSuccess, encryptionElapsed) = _encryptionService.Encrypt(destFile);
                 encryptionFailed = !encryptionSuccess;

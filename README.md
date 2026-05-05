@@ -101,3 +101,4 @@ EasySave is a backup application designed to evolve across multiple versions:
 Build a **scalable, maintainable and professional backup system** that can evolve quickly across multiple versions while minimizing future development cost.
 
 ---
+dotnet run --project GUI/GUI.csproj
