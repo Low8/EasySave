@@ -14,14 +14,21 @@ public class BackupService : IStateSubject
     private readonly EasyLogger _logger;
     private readonly IEncryptionService _encryptionService;
     private readonly IBusinessSoftwareGuard _guard;
+    private readonly ITransferCoordinator _transferCoordinator;
     private readonly List<BackupJobConfig> _jobs = [];
 
-    public BackupService(string configPath, EasyLogger logger, IEncryptionService encryptionService, IBusinessSoftwareGuard guard)
+    public BackupService(
+        string configPath,
+        EasyLogger logger,
+        IEncryptionService encryptionService,
+        IBusinessSoftwareGuard guard,
+        ITransferCoordinator transferCoordinator)
     {
         _repository = new JsonBackupJobRepository(configPath);
         _logger = logger;
         _encryptionService = encryptionService;
         _guard = guard;
+        _transferCoordinator = transferCoordinator;
         LoadJobs();
     }
 
@@ -81,7 +88,7 @@ public class BackupService : IStateSubject
             ? new FullBackupStrategy()
             : new DifferentialBackupStrategy();
 
-        var job = new BackupJob(config, strategy, _encryptionService);
+        var job = new BackupJob(config, strategy, _encryptionService, _transferCoordinator);
 
         var allFiles = Directory.GetFiles(config.SourceDir, "*", SearchOption.AllDirectories);
         int totalFiles = allFiles.Length;
@@ -162,20 +169,19 @@ public class BackupService : IStateSubject
 
     public async Task RunRange(IEnumerable<int> indices, CancellationToken ct = default)
     {
-        foreach (var index in indices)
+        if (_guard.IsRunning())
         {
-            if (_guard.IsRunning())
+            Console.Error.WriteLine("[BackupService] Parallel run interrupted: business software detected.");
+            Notify(new BackupState
             {
-                Console.Error.WriteLine("[BackupService] Sequential run interrupted: business software detected.");
-                Notify(new BackupState
-                {
-                    Name = "Sequential",
-                    LastActionTime = DateTime.Now,
-                    Status = BackupStatus.Interrupted
-                });
-                break;
-            }
-            await RunJob(index, ct);
+                Name = "Parallel",
+                LastActionTime = DateTime.Now,
+                Status = BackupStatus.Interrupted
+            });
+            return;
         }
+
+        var tasks = indices.Select(index => RunJob(index, ct));
+        await Task.WhenAll(tasks);
     }
 }

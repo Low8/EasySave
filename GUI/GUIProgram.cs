@@ -43,7 +43,8 @@ namespace EasySave.GUI
                     ? new ProcessBusinessSoftwareGuard(settings.BusinessSoftwareNames)
                     : new NoBusinessSoftwareGuard();
             var configPath = Path.Combine(solutionRoot, "config.json");
-            var service = new BackupService(configPath, logger, encryptionService, guard);
+            var transferCoordinator = new TransferCoordinator(() => settingsRepo.Load());
+            var service = new BackupService(configPath, logger, encryptionService, guard, transferCoordinator);
             var statePath = Path.Combine(solutionRoot, "logs", "live", "state.json");
             var stateWriter = new StateFileWriter(statePath, stateFormatter);
             service.Attach(stateWriter);

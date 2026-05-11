@@ -192,6 +192,12 @@
   <data name="settings_encrypted_extensions" xml:space="preserve">
     <value>Extensions chiffrées (ex : .txt)</value>
   </data>
+  <data name="settings_priority_extensions" xml:space="preserve">
+    <value>Extensions prioritaires (ex : .docx)</value>
+  </data>
+  <data name="settings_max_parallel_kb" xml:space="preserve">
+    <value>Taille max en transfert parallèle (KB)</value>
+  </data>
   <data name="button_add" xml:space="preserve">
     <value>Ajouter</value>
   </data>

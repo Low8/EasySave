@@ -39,7 +39,8 @@ public class BackupExecutionIntegrationTests : IDisposable
         File.WriteAllText(fileA, "hello");
 
         var logger = new EasyLogger(_logDir, new JsonLogFormatter());
-        var service = new BackupService(_configPath, logger, new NoEncryptionService(), new NoOpGuard());
+        var transferCoordinator = new TransferCoordinator(() => new AppSettings());
+        var service = new BackupService(_configPath, logger, new NoEncryptionService(), new NoOpGuard(), transferCoordinator);
         service.AddJob(new BackupJobConfig { Name = "J", SourceDir = _src, TargetDir = _dst, Type = BackupType.Full });
 
         // Act
@@ -63,7 +64,8 @@ public class BackupExecutionIntegrationTests : IDisposable
         File.SetLastWriteTime(destFile, DateTime.Now.AddMinutes(1)); // destination newer
 
         var logger = new EasyLogger(_logDir, new JsonLogFormatter());
-        var service = new BackupService(_configPath, logger, new NoEncryptionService(), new NoOpGuard());
+        var transferCoordinator = new TransferCoordinator(() => new AppSettings());
+        var service = new BackupService(_configPath, logger, new NoEncryptionService(), new NoOpGuard(), transferCoordinator);
         service.AddJob(new BackupJobConfig { Name = "J", SourceDir = _src, TargetDir = _dst, Type = BackupType.Differential });
 
         // Act

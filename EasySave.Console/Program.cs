@@ -58,7 +58,8 @@ class Program
                 : new NoBusinessSoftwareGuard();
 
         var configPath = Path.Combine(solutionRoot, "config.json");
-        var service = new BackupService(configPath, logger, encryptionService, guard);
+        var transferCoordinator = new TransferCoordinator(() => appSettings);
+        var service = new BackupService(configPath, logger, encryptionService, guard, transferCoordinator);
 
         var observer = new ConsoleObserver(loc);
         service.Attach(observer);

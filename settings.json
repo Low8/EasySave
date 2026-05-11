@@ -10,5 +10,7 @@
   "BusinessSoftwareNames": [
     "CalculatorApp.exe",
     "qsdgf"
-  ]
+  ],
+  "PriorityExtensions": [],
+  "MaxFileSizeForParallelTransferKb": 1000
 }
