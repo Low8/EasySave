@@ -102,3 +102,4 @@ Build a **scalable, maintainable and professional backup system** that can evolv
 
 ---
 dotnet run --project GUI/GUI.csproj
+dotnet run --project GUI/GUI.csproj
