@@ -39,18 +39,22 @@ public class BackupJob
             try
             {
                 var maxDegree = 3;
-                using var throttler = new SemaphoreSlim(maxDegree, maxDegree);
-                var tasks = new List<Task>();
+                var fileChannel = System.Threading.Channels.Channel.CreateUnbounded<string>();
 
                 foreach (var sourceFile in files)
-                {
-                    await WaitForPauseAsync(ct);
-                    await WaitForThrottleAsync(throttler, ct);
+                    await fileChannel.Writer.WriteAsync(sourceFile, ct);
 
-                    tasks.Add(Task.Run(async () =>
+                fileChannel.Writer.TryComplete();
+
+                var workers = Enumerable.Range(0, maxDegree)
+                    .Select(_ => Task.Run(async () =>
                     {
-                        try
+                        while (await fileChannel.Reader.WaitToReadAsync(ct))
                         {
+                            await WaitForPauseAsync(ct);
+                            if (!fileChannel.Reader.TryRead(out var sourceFile))
+                                continue;
+
                             await WaitForPauseAsync(ct);
                             var relativePath = Path.GetRelativePath(_config.SourceDir, sourceFile);
                             var destFile = Path.Combine(_config.TargetDir, relativePath);
@@ -85,7 +89,7 @@ public class BackupJob
                                 await _transferCoordinator.WaitAsync(sourceFile, sourceSize, ct);
                                 acquired = true;
                                 await WaitForPauseAsync(ct);
-                                copied = _strategy.Execute(sourceFile, destFile);
+                                copied = _strategy.Execute(sourceFile, destFile, WaitForPause, ct);
                             }
                             catch (Exception)
                             {
@@ -102,7 +106,7 @@ public class BackupJob
                             if (failed)
                             {
                                 await channel.Writer.WriteAsync(new BackupResult(sourceFile, destFile, 0, -1, false, false), ct);
-                                return;
+                                continue;
                             }
 
                             long encryptionMs = 0;
@@ -128,14 +132,10 @@ public class BackupJob
                                 Skipped: !copied,
                                 EncryptionMs: encryptionMs), ct);
                         }
-                        finally
-                        {
-                            throttler.Release();
-                        }
-                    }, ct));
-                }
+                    }, ct))
+                    .ToList();
 
-                await Task.WhenAll(tasks);
+                await Task.WhenAll(workers);
             }
             catch (OperationCanceledException)
             {
@@ -156,19 +156,9 @@ public class BackupJob
         }
     }
 
-    private async Task WaitForPauseAsync(CancellationToken ct)
-    {
-        while (!_pauseEvent.IsSet)
-            await Task.Delay(200, ct);
-    }
+    private void WaitForPause(CancellationToken ct) => _pauseEvent.Wait(ct);
 
-    private async Task WaitForThrottleAsync(SemaphoreSlim throttler, CancellationToken ct)
-    {
-        while (true)
-        {
-            await WaitForPauseAsync(ct);
-            if (await throttler.WaitAsync(200, ct))
-                return;
-        }
-    }
+    private Task WaitForPauseAsync(CancellationToken ct) =>
+        Task.Run(() => WaitForPause(ct), ct);
+
 }

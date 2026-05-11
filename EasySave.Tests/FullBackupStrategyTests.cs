@@ -29,7 +29,7 @@ public class FullBackupStrategyTests : IDisposable
         File.WriteAllText(_sourceFile, "content");
 
         // Act
-        var copied = _strategy.Execute(_sourceFile, _destFile);
+        var copied = _strategy.Execute(_sourceFile, _destFile, _ => { }, CancellationToken.None);
 
         // Assert
         Assert.True(copied);
@@ -45,7 +45,7 @@ public class FullBackupStrategyTests : IDisposable
         File.WriteAllText(_destFile,   "old content");
 
         // Act
-        _strategy.Execute(_sourceFile, _destFile);
+        _strategy.Execute(_sourceFile, _destFile, _ => { }, CancellationToken.None);
 
         // Assert
         Assert.Equal("new content", File.ReadAllText(_destFile));

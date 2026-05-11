@@ -4,11 +4,11 @@ namespace EasySave.Services;
 
 public class DifferentialBackupStrategy : IBackupStrategy 
 {
-    public bool Execute(string sourceFile, string destFile)
+    public bool Execute(string sourceFile, string destFile, Action<CancellationToken> waitForPause, CancellationToken ct)
     {
         if (!File.Exists(destFile) || File.GetLastWriteTime(sourceFile) > File.GetLastWriteTime(destFile))
         {
-            File.Copy(sourceFile, destFile, overwrite: true);
+            PausableFileCopy.Copy(sourceFile, destFile, waitForPause, ct);
             return true; 
         }
         return false; 

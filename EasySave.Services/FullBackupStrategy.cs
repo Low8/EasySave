@@ -4,9 +4,9 @@ namespace EasySave.Services;
 
 public class FullBackupStrategy : IBackupStrategy 
 {
-    public bool Execute(string sourceFile, string destFile)
+    public bool Execute(string sourceFile, string destFile, Action<CancellationToken> waitForPause, CancellationToken ct)
     {
-        File.Copy(sourceFile, destFile, overwrite: true);
+        PausableFileCopy.Copy(sourceFile, destFile, waitForPause, ct);
         return true; 
     }
 }

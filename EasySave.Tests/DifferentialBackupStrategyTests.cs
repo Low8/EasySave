@@ -29,7 +29,7 @@ public class DifferentialBackupStrategyTests : IDisposable
         File.WriteAllText(_sourceFile, "content");
 
         // Act
-        var copied = _strategy.Execute(_sourceFile, _destFile);
+        var copied = _strategy.Execute(_sourceFile, _destFile, _ => { }, CancellationToken.None);
 
         // Assert
         Assert.True(copied);
@@ -47,7 +47,7 @@ public class DifferentialBackupStrategyTests : IDisposable
         File.SetLastWriteTime(_destFile,   DateTime.Now);
 
         // Act
-        var copied = _strategy.Execute(_sourceFile, _destFile);
+        var copied = _strategy.Execute(_sourceFile, _destFile, _ => { }, CancellationToken.None);
 
         // Assert
         Assert.False(copied);
@@ -64,7 +64,7 @@ public class DifferentialBackupStrategyTests : IDisposable
         File.SetLastWriteTime(_sourceFile, DateTime.Now);
 
         // Act
-        var copied = _strategy.Execute(_sourceFile, _destFile);
+        var copied = _strategy.Execute(_sourceFile, _destFile, _ => { }, CancellationToken.None);
 
         // Assert
         Assert.True(copied);
@@ -82,7 +82,7 @@ public class DifferentialBackupStrategyTests : IDisposable
         File.SetLastWriteTime(_destFile,   timestamp);
 
         // Act
-        var copied = _strategy.Execute(_sourceFile, _destFile);
+        var copied = _strategy.Execute(_sourceFile, _destFile, _ => { }, CancellationToken.None);
 
         // Assert — la condition est strictement >, pas >=
         Assert.False(copied);
