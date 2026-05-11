@@ -16,6 +16,7 @@ public class BackupService : IStateSubject
     private readonly IBusinessSoftwareGuard _guard;
     private readonly ITransferCoordinator _transferCoordinator;
     private readonly List<BackupJobConfig> _jobs = [];
+    private readonly Dictionary<int, ManualResetEventSlim> _pauseEvents = [];
 
     public BackupService(
         string configPath,
@@ -78,17 +79,13 @@ public class BackupService : IStateSubject
 
         var config = _jobs[index];
 
-        if (_guard.IsRunning())
-        {
-            Console.Error.WriteLine($"[BackupService] Job '{config.Name}' blocked: business software is running.");
-            return;
-        }
+        var pauseEvent = GetPauseEvent(index);
 
         IBackupStrategy strategy = config.Type == BackupType.Full
             ? new FullBackupStrategy()
             : new DifferentialBackupStrategy();
 
-        var job = new BackupJob(config, strategy, _encryptionService, _transferCoordinator);
+        var job = new BackupJob(config, strategy, _encryptionService, _transferCoordinator, pauseEvent);
 
         var allFiles = Directory.GetFiles(config.SourceDir, "*", SearchOption.AllDirectories);
         int totalFiles = allFiles.Length;
@@ -96,62 +93,79 @@ public class BackupService : IStateSubject
         int remainingFiles = totalFiles;
         long remainingSize = totalSize;
 
-        bool interrupted = false;
+        bool paused = false;
 
-        await foreach (var result in job.Execute(ct))
+        try
         {
-            remainingFiles--;
-            remainingSize -= result.FileSize;
-            float progress = totalFiles == 0 ? 100f : (float)(totalFiles - remainingFiles) / totalFiles * 100f;
-
-            _logger.Log(new LogEntry
+            await foreach (var result in job.Execute(ct))
             {
-                Timestamp    = DateTime.Now,
-                BackupName   = config.Name,
-                SourcePath   = result.SourcePath,
-                DestPath     = result.DestPath,
-                FileSize     = result.FileSize,
-                TransferMs   = result.TransferMs,
-                EncryptionMs = result.EncryptionMs
-            });
+                remainingFiles--;
+                remainingSize -= result.FileSize;
+                float progress = totalFiles == 0 ? 100f : (float)(totalFiles - remainingFiles) / totalFiles * 100f;
 
-            Notify(new BackupState
-            {
-                Name = config.Name,
-                LastActionTime = DateTime.Now,
-                Status = result.Success ? BackupStatus.Running : BackupStatus.Error,
-                TotalFiles = totalFiles,
-                TotalSize = totalSize,
-                RemainingFiles = remainingFiles,
-                RemainingSize = remainingSize,
-                Progress = progress,
-                CurrentSource = result.SourcePath,
-                CurrentDest = result.DestPath,
-                LastFileSkipped = result.Skipped
-            });
+                _logger.Log(new LogEntry
+                {
+                    Timestamp    = DateTime.Now,
+                    BackupName   = config.Name,
+                    SourcePath   = result.SourcePath,
+                    DestPath     = result.DestPath,
+                    FileSize     = result.FileSize,
+                    TransferMs   = result.TransferMs,
+                    EncryptionMs = result.EncryptionMs
+                });
 
-            if (_guard.IsRunning())
-            {
-                Console.Error.WriteLine($"[BackupService] Job '{config.Name}' interrupted: business software detected.");
                 Notify(new BackupState
                 {
                     Name = config.Name,
                     LastActionTime = DateTime.Now,
-                    Status = BackupStatus.Interrupted,
+                    Status = result.Success ? BackupStatus.Running : BackupStatus.Error,
                     TotalFiles = totalFiles,
                     TotalSize = totalSize,
                     RemainingFiles = remainingFiles,
                     RemainingSize = remainingSize,
-                    Progress = totalFiles == 0 ? 0 : (float)(totalFiles - remainingFiles) / totalFiles * 100,
-                    CurrentSource = string.Empty,
-                    CurrentDest = string.Empty
+                    Progress = progress,
+                    CurrentSource = result.SourcePath,
+                    CurrentDest = result.DestPath,
+                    LastFileSkipped = result.Skipped
                 });
-                interrupted = true;
-                break;
+
+                if (_guard.IsRunning())
+                {
+                    pauseEvent.Reset();
+                    Console.Error.WriteLine($"[BackupService] Job '{config.Name}' paused: business software detected.");
+                    Notify(new BackupState
+                    {
+                        Name = config.Name,
+                        LastActionTime = DateTime.Now,
+                        Status = BackupStatus.Paused,
+                        TotalFiles = totalFiles,
+                        TotalSize = totalSize,
+                        RemainingFiles = remainingFiles,
+                        RemainingSize = remainingSize,
+                        Progress = totalFiles == 0 ? 0 : (float)(totalFiles - remainingFiles) / totalFiles * 100,
+                        CurrentSource = string.Empty,
+                        CurrentDest = string.Empty
+                    });
+                    paused = true;
+                    await WaitForResumeAsync(pauseEvent, ct);
+                    if (_guard.IsRunning())
+                        break;
+                    paused = false;
+                }
             }
         }
+        catch (OperationCanceledException)
+        {
+            Notify(new BackupState
+            {
+                Name = config.Name,
+                LastActionTime = DateTime.Now,
+                Status = BackupStatus.Interrupted
+            });
+            return;
+        }
 
-        if (!interrupted)
+        if (!paused)
         {
             Notify(new BackupState
             {
@@ -167,20 +181,43 @@ public class BackupService : IStateSubject
         }
     }
 
-    public async Task RunRange(IEnumerable<int> indices, CancellationToken ct = default)
+    public void PauseJobs(IEnumerable<int> indices)
+    {
+        foreach (var index in indices)
+        {
+            GetPauseEvent(index).Reset();
+        }
+    }
+
+    public bool ResumeJobs(IEnumerable<int> indices)
     {
         if (_guard.IsRunning())
+            return false;
+
+        foreach (var index in indices)
         {
-            Console.Error.WriteLine("[BackupService] Parallel run interrupted: business software detected.");
-            Notify(new BackupState
-            {
-                Name = "Parallel",
-                LastActionTime = DateTime.Now,
-                Status = BackupStatus.Interrupted
-            });
-            return;
+            GetPauseEvent(index).Set();
         }
 
+        return true;
+    }
+
+    private ManualResetEventSlim GetPauseEvent(int index)
+    {
+        if (!_pauseEvents.TryGetValue(index, out var pauseEvent))
+        {
+            pauseEvent = new ManualResetEventSlim(true);
+            _pauseEvents[index] = pauseEvent;
+        }
+
+        return pauseEvent;
+    }
+
+    private static Task WaitForResumeAsync(ManualResetEventSlim pauseEvent, CancellationToken ct) =>
+        Task.Run(() => pauseEvent.Wait(ct), ct);
+
+    public async Task RunRange(IEnumerable<int> indices, CancellationToken ct = default)
+    {
         var tasks = indices.Select(index => RunJob(index, ct));
         await Task.WhenAll(tasks);
     }

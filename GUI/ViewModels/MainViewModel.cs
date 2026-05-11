@@ -26,6 +26,12 @@ namespace EasySave.GUI.ViewModels
 
         private RelayCommand _runSelectedCommand;
         private RelayCommand _runAllCommand;
+        private RelayCommand _pauseSelectedCommand;
+        private RelayCommand _resumeSelectedCommand;
+        private RelayCommand _stopSelectedCommand;
+        private RelayCommand _pauseAllCommand;
+        private RelayCommand _resumeAllCommand;
+        private RelayCommand _stopAllCommand;
         private RelayCommand _browseNewSourceCommand;
         private RelayCommand _browseNewTargetCommand;
         private RelayCommand _browseEditSourceCommand;
@@ -35,6 +41,7 @@ namespace EasySave.GUI.ViewModels
         private RelayCommand _removeJobCommand;
 
         public ObservableCollection<BackupJobViewModel> Jobs { get; } = new();
+        public ObservableCollection<BackupJobViewModel> SelectedJobs { get; } = new();
 
         private BackupJobViewModel _selectedJob;
         public BackupJobViewModel SelectedJob
@@ -50,6 +57,56 @@ namespace EasySave.GUI.ViewModels
             }
         }
 
+        private void PauseSelected()
+        {
+            var indices = SelectedJobs
+                .Select(job => Jobs.IndexOf(job))
+                .Where(index => index >= 0)
+                .Distinct()
+                .ToList();
+
+            if (indices.Count == 0) return;
+
+            _service.PauseJobs(indices);
+            StatusMessage = _loc.Get("menu_pause") + " " + _loc.Get("status_done");
+        }
+
+        private void ResumeSelected()
+        {
+            var indices = SelectedJobs
+                .Select(job => Jobs.IndexOf(job))
+                .Where(index => index >= 0)
+                .Distinct()
+                .ToList();
+
+            if (indices.Count == 0) return;
+
+            if (_service.ResumeJobs(indices))
+                StatusMessage = _loc.Get("menu_resume") + " " + _loc.Get("status_done");
+            else
+                StatusMessage = _loc.Get("menu_resume") + " " + _loc.Get("status_blocked");
+        }
+
+        private void StopSelected()
+        {
+            var indices = SelectedJobs
+                .Select(job => Jobs.IndexOf(job))
+                .Where(index => index >= 0)
+                .Distinct()
+                .ToList();
+
+            if (indices.Count == 0) return;
+
+            foreach (var index in indices)
+            {
+                if (_cts.TryGetValue(index, out var cts))
+                    cts.Cancel();
+            }
+
+            StatusMessage = _loc.Get("menu_stop") + " " + _loc.Get("status_done");
+        }
+        
+
         public SettingsViewModel Settings { get; }
 
         public ICommand AddJobCommand => _addJobCommand;
@@ -57,6 +114,12 @@ namespace EasySave.GUI.ViewModels
         public ICommand RemoveJobCommand => _removeJobCommand;
         public ICommand RunSelectedCommand => _runSelectedCommand;
         public ICommand RunAllCommand => _runAllCommand;
+        public ICommand PauseSelectedCommand => _pauseSelectedCommand;
+        public ICommand ResumeSelectedCommand => _resumeSelectedCommand;
+        public ICommand StopSelectedCommand => _stopSelectedCommand;
+        public ICommand PauseAllCommand => _pauseAllCommand;
+        public ICommand ResumeAllCommand => _resumeAllCommand;
+        public ICommand StopAllCommand => _stopAllCommand;
         public ICommand BrowseNewSourceCommand => _browseNewSourceCommand;
         public ICommand BrowseNewTargetCommand => _browseNewTargetCommand;
         public ICommand BrowseEditSourceCommand => _browseEditSourceCommand;
@@ -135,6 +198,14 @@ namespace EasySave.GUI.ViewModels
         public string MenuDeleteText => _loc.Get("menu_delete");
         public string MenuRunText => _loc.Get("menu_run");
         public string MenuRunAllText => _loc.Get("menu_run_all");
+        public string MenuPauseText => _loc.Get("menu_pause");
+        public string MenuResumeText => _loc.Get("menu_resume");
+        public string MenuStopText => _loc.Get("menu_stop");
+        public string MenuPauseAllText => _loc.Get("menu_pause_all");
+        public string MenuResumeAllText => _loc.Get("menu_resume_all");
+        public string MenuStopAllText => _loc.Get("menu_stop_all");
+        public string MenuSelectedJobsText => _loc.Get("menu_selected_jobs");
+        public string MenuAllJobsText => _loc.Get("menu_all_jobs");
         public string MenuSettingsText => _loc.Get("menu_settings");
         public string PromptNameText => _loc.Get("prompt_name");
         public string PromptSourceText => _loc.Get("prompt_source");
@@ -165,8 +236,16 @@ namespace EasySave.GUI.ViewModels
 
             LoadJobs();
 
-            _runSelectedCommand = new RelayCommand(RunSelected, () => SelectedJob != null);
+            SelectedJobs.CollectionChanged += (_, _) => UpdateCommandStates();
+
+            _runSelectedCommand = new RelayCommand(RunSelected, () => SelectedJobs.Count > 0);
             _runAllCommand = new RelayCommand(RunAll, () => Jobs.Any());
+            _pauseSelectedCommand = new RelayCommand(PauseSelected, () => SelectedJobs.Count > 0);
+            _resumeSelectedCommand = new RelayCommand(ResumeSelected, () => SelectedJobs.Count > 0);
+            _stopSelectedCommand = new RelayCommand(StopSelected, () => SelectedJobs.Count > 0);
+            _pauseAllCommand = new RelayCommand(PauseAll, () => Jobs.Any());
+            _resumeAllCommand = new RelayCommand(ResumeAll, () => Jobs.Any());
+            _stopAllCommand = new RelayCommand(StopAll, () => Jobs.Any());
             _addJobCommand = new RelayCommand(AddJob);
             _updateJobCommand = new RelayCommand(UpdateSelectedJob, () => SelectedJob != null);
             _removeJobCommand = new RelayCommand(RemoveSelectedJob, () => SelectedJob != null);
@@ -232,6 +311,7 @@ namespace EasySave.GUI.ViewModels
         private void LoadJobs()
         {
             Jobs.Clear();
+            SelectedJobs.Clear();
             var jobs = _service.GetJobs().ToList();
             for (int i = 0; i < jobs.Count; i++)
                 Jobs.Add(new BackupJobViewModel(jobs[i], _loc));
@@ -259,6 +339,12 @@ namespace EasySave.GUI.ViewModels
         {
             _runSelectedCommand?.RaiseCanExecuteChanged();
             _runAllCommand?.RaiseCanExecuteChanged();
+            _pauseSelectedCommand?.RaiseCanExecuteChanged();
+            _resumeSelectedCommand?.RaiseCanExecuteChanged();
+            _stopSelectedCommand?.RaiseCanExecuteChanged();
+            _pauseAllCommand?.RaiseCanExecuteChanged();
+            _resumeAllCommand?.RaiseCanExecuteChanged();
+            _stopAllCommand?.RaiseCanExecuteChanged();
             _updateJobCommand?.RaiseCanExecuteChanged();
             _removeJobCommand?.RaiseCanExecuteChanged();
         }
@@ -281,6 +367,14 @@ namespace EasySave.GUI.ViewModels
             OnPropertyChanged(nameof(MenuDeleteText));
             OnPropertyChanged(nameof(MenuRunText));
             OnPropertyChanged(nameof(MenuRunAllText));
+            OnPropertyChanged(nameof(MenuPauseText));
+            OnPropertyChanged(nameof(MenuResumeText));
+            OnPropertyChanged(nameof(MenuStopText));
+            OnPropertyChanged(nameof(MenuPauseAllText));
+            OnPropertyChanged(nameof(MenuResumeAllText));
+            OnPropertyChanged(nameof(MenuStopAllText));
+            OnPropertyChanged(nameof(MenuSelectedJobsText));
+            OnPropertyChanged(nameof(MenuAllJobsText));
             OnPropertyChanged(nameof(MenuSettingsText));
             OnPropertyChanged(nameof(PromptNameText));
             OnPropertyChanged(nameof(PromptSourceText));
@@ -296,23 +390,60 @@ namespace EasySave.GUI.ViewModels
 
         private async void RunSelected()
         {
-            if (SelectedJob == null) return;
+            var selected = SelectedJobs.ToList();
 
-            int index = Jobs.IndexOf(SelectedJob);
+            if (selected.Count == 0) return;
+
+            var indices = selected
+                .Select(job => Jobs.IndexOf(job))
+                .Where(index => index >= 0)
+                .Distinct()
+                .ToList();
+
+            if (indices.Count == 0) return;
 
             var cts = new CancellationTokenSource();
-            _cts[index] = cts;
+            foreach (var index in indices)
+                _cts[index] = cts;
             StatusMessage = _loc.Get("menu_run") + " " + _loc.Get("status_running");
 
             try
             {
-                await Task.Run(async () => await _service.RunJob(index, cts.Token));
+                await Task.Run(async () => await _service.RunRange(indices, cts.Token));
                 StatusMessage = _loc.Get("menu_run") + " " + _loc.Get("status_done");
             }
             finally
             {
-                SelectedJob.IsActive = false;
+                foreach (var job in selected)
+                    job.IsActive = false;
             }
+        }
+
+        private void PauseAll()
+        {
+            var indices = Enumerable.Range(0, Jobs.Count).ToList();
+            if (indices.Count == 0) return;
+            _service.PauseJobs(indices);
+            StatusMessage = _loc.Get("menu_pause_all") + " " + _loc.Get("status_done");
+        }
+
+        private void ResumeAll()
+        {
+            var indices = Enumerable.Range(0, Jobs.Count).ToList();
+            if (indices.Count == 0) return;
+
+            if (_service.ResumeJobs(indices))
+                StatusMessage = _loc.Get("menu_resume_all") + " " + _loc.Get("status_done");
+            else
+                StatusMessage = _loc.Get("menu_resume_all") + " " + _loc.Get("status_blocked");
+        }
+
+        private void StopAll()
+        {
+            _runAllCts?.Cancel();
+            foreach (var cts in _cts.Values)
+                cts.Cancel();
+            StatusMessage = _loc.Get("menu_stop_all") + " " + _loc.Get("status_done");
         }
 
         private async void RunAll()
