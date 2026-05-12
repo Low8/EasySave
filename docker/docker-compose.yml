@@ -3,7 +3,7 @@ version: '3.8'
 services:
   easysave-logs:
     build:
-      context: .
+      context: ..
       dockerfile: docker/Dockerfile
     container_name: easysave-log-server
     ports:

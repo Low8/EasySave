@@ -1,6 +1,10 @@
 {
   "LogFormat": "Json",
   "Language": "fr",
+  "LogDestination": "Hybrid",
+  "RemoteLogServerUrl": "http://localhost:5000",
+  "RemoteLogServerApiKey": "",
+  "RemoteLogTimeoutMs": 5000,
   "CryptoSoftPath": "tools\\CryptoSoft.exe",
   "EncryptionKey": "easysave",
   "EncryptedExtensions": [
@@ -8,6 +12,8 @@
   ],
   "BusinessSoftwareNames": [
     "CalculatorApp.exe",
-    "qsdgf"
+    "qsdgf",
+    "excel", 
+    "outlook"
   ]
 }
