@@ -240,4 +240,16 @@
   <data name="job_last_update" xml:space="preserve">
     <value>Dernière mise à jour : {0:HH:mm:ss}</value>
   </data>
+  <data name="settings_log_destination" xml:space="preserve">
+    <value>Destination des Logs</value>
+  </data>
+  <data name="settings_remote_server" xml:space="preserve">
+    <value>URL du serveur distant</value>
+  </data>
+  <data name="settings_remote_api_key" xml:space="preserve">
+    <value>Clé API du serveur distant</value>
+  </data>
+  <data name="settings_remote_timeout" xml:space="preserve">
+    <value>Délai d'attente du serveur distant (ms)</value>
+  </data>
 </root>
