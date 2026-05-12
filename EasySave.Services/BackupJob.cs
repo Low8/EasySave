@@ -11,19 +11,22 @@ public class BackupJob
     private readonly IEncryptionService _encryptionService;
     private readonly ITransferCoordinator _transferCoordinator;
     private readonly ManualResetEventSlim _pauseEvent;
+    private readonly Func<AppSettings> _getSettings;
 
     public BackupJob(
         BackupJobConfig config,
         IBackupStrategy strategy,
         IEncryptionService encryptionService,
         ITransferCoordinator transferCoordinator,
-        ManualResetEventSlim pauseEvent)
+        ManualResetEventSlim pauseEvent,
+        Func<AppSettings> getSettings)
     {
         _config = config;
         _strategy = strategy;
         _encryptionService = encryptionService;
         _transferCoordinator = transferCoordinator;
         _pauseEvent = pauseEvent;
+        _getSettings = getSettings;
     }
 
     public async IAsyncEnumerable<BackupResult> Execute(
@@ -38,7 +41,7 @@ public class BackupJob
         {
             try
             {
-                var maxDegree = 3;
+                var maxDegree = _getSettings().MaxParallelDegree;
                 var fileChannel = System.Threading.Channels.Channel.CreateUnbounded<string>();
 
                 foreach (var sourceFile in files)

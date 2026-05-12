@@ -18,7 +18,7 @@ public class BackupServiceTests : IDisposable
         _logDir = Path.Combine(Path.GetTempPath(), $"easysave_logs_{Guid.NewGuid()}");
         var logger = new EasyLogger(_logDir, new JsonLogFormatter());
         var transferCoordinator = new TransferCoordinator(() => new AppSettings());
-        _service = new BackupService(_configPath, logger, new NoOpEncryptionService(), new NoOpGuard(), transferCoordinator);
+        _service = new BackupService(_configPath, logger, new NoOpEncryptionService(), new NoOpGuard(), transferCoordinator, () => new AppSettings());
     }
 
     public void Dispose()
@@ -98,7 +98,7 @@ public class BackupServiceTests : IDisposable
         // Act — nouvelle instance pointant sur le même configPath
         var logger2 = new EasyLogger(_logDir, new JsonLogFormatter());
         var transferCoordinator2 = new TransferCoordinator(() => new AppSettings());
-        var service2 = new BackupService(_configPath, logger2, new NoOpEncryptionService(), new NoOpGuard(), transferCoordinator2);
+        var service2 = new BackupService(_configPath, logger2, new NoOpEncryptionService(), new NoOpGuard(), transferCoordinator2, () => new AppSettings());
 
         // Assert
         Assert.Single(service2.GetJobs());

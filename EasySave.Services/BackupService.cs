@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using EasySave.Models;
 using EasySave.Services.Encryption;
 using EasySave.Services.Guard;
@@ -10,35 +11,42 @@ namespace EasySave.Services;
 public class BackupService : IStateSubject
 {
     private readonly List<IStateObserver> _observers = [];
+    private readonly object _observersLock = new();
     private readonly IBackupJobRepository _repository;
     private readonly EasyLogger _logger;
     private readonly IEncryptionService _encryptionService;
     private readonly IBusinessSoftwareGuard _guard;
     private readonly ITransferCoordinator _transferCoordinator;
     private readonly List<BackupJobConfig> _jobs = [];
-    private readonly Dictionary<int, ManualResetEventSlim> _pauseEvents = [];
+    private readonly ConcurrentDictionary<int, ManualResetEventSlim> _pauseEvents = new();
+    private readonly Func<AppSettings> _getSettings;
 
     public BackupService(
         string configPath,
         EasyLogger logger,
         IEncryptionService encryptionService,
         IBusinessSoftwareGuard guard,
-        ITransferCoordinator transferCoordinator)
+        ITransferCoordinator transferCoordinator,
+        Func<AppSettings> getSettings)
     {
         _repository = new JsonBackupJobRepository(configPath);
         _logger = logger;
         _encryptionService = encryptionService;
         _guard = guard;
         _transferCoordinator = transferCoordinator;
+        _getSettings = getSettings;
         LoadJobs();
     }
 
-    public void Attach(IStateObserver observer) => _observers.Add(observer);
-    public void Detach(IStateObserver observer) => _observers.Remove(observer);
+    public void Attach(IStateObserver observer) { lock (_observersLock) _observers.Add(observer); }
+    public void Detach(IStateObserver observer) { lock (_observersLock) _observers.Remove(observer); }
 
     public void Notify(BackupState state)
     {
-        foreach (var observer in _observers)
+        List<IStateObserver> snapshot;
+        lock (_observersLock)
+            snapshot = _observers.ToList();
+        foreach (var observer in snapshot)
             observer.Update(state);
     }
 
@@ -85,7 +93,7 @@ public class BackupService : IStateSubject
             ? new FullBackupStrategy()
             : new DifferentialBackupStrategy();
 
-        var job = new BackupJob(config, strategy, _encryptionService, _transferCoordinator, pauseEvent);
+        var job = new BackupJob(config, strategy, _encryptionService, _transferCoordinator, pauseEvent, _getSettings);
 
         var allFiles = Directory.GetFiles(config.SourceDir, "*", SearchOption.AllDirectories);
         int totalFiles = allFiles.Length;
@@ -147,9 +155,25 @@ public class BackupService : IStateSubject
                         CurrentDest = string.Empty
                     });
                     paused = true;
-                    await WaitForResumeAsync(pauseEvent, ct);
-                    if (_guard.IsRunning())
-                        break;
+                    while (_guard.IsRunning())
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        await Task.Delay(500, ct);
+                    }
+                    pauseEvent.Set();
+                    Notify(new BackupState
+                    {
+                        Name           = config.Name,
+                        LastActionTime = DateTime.Now,
+                        Status         = BackupStatus.Running,
+                        TotalFiles     = totalFiles,
+                        TotalSize      = totalSize,
+                        RemainingFiles = remainingFiles,
+                        RemainingSize  = remainingSize,
+                        Progress       = totalFiles == 0 ? 0 : (float)(totalFiles - remainingFiles) / totalFiles * 100,
+                        CurrentSource  = string.Empty,
+                        CurrentDest    = string.Empty
+                    });
                     paused = false;
                 }
             }
@@ -202,19 +226,8 @@ public class BackupService : IStateSubject
         return true;
     }
 
-    private ManualResetEventSlim GetPauseEvent(int index)
-    {
-        if (!_pauseEvents.TryGetValue(index, out var pauseEvent))
-        {
-            pauseEvent = new ManualResetEventSlim(true);
-            _pauseEvents[index] = pauseEvent;
-        }
-
-        return pauseEvent;
-    }
-
-    private static Task WaitForResumeAsync(ManualResetEventSlim pauseEvent, CancellationToken ct) =>
-        Task.Run(() => pauseEvent.Wait(ct), ct);
+    private ManualResetEventSlim GetPauseEvent(int index) =>
+        _pauseEvents.GetOrAdd(index, _ => new ManualResetEventSlim(true));
 
     public async Task RunRange(IEnumerable<int> indices, CancellationToken ct = default)
     {

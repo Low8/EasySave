@@ -272,7 +272,7 @@ namespace EasySave.GUI.ViewModels
             var encryptionService = CreateEncryptionService(settings);
             var guard = CreateBusinessSoftwareGuard(settings);
             var transferCoordinator = new TransferCoordinator(() => _settingsRepo.Load());
-            var service = new BackupService(_configPath, logger, encryptionService, guard, transferCoordinator);
+            var service = new BackupService(_configPath, logger, encryptionService, guard, transferCoordinator, () => _settingsRepo.Load());
 
             service.Attach(this);
 

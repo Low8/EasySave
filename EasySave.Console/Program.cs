@@ -59,7 +59,7 @@ class Program
 
         var configPath = Path.Combine(solutionRoot, "config.json");
         var transferCoordinator = new TransferCoordinator(() => appSettings);
-        var service = new BackupService(configPath, logger, encryptionService, guard, transferCoordinator);
+        var service = new BackupService(configPath, logger, encryptionService, guard, transferCoordinator, () => appSettings);
 
         var observer = new ConsoleObserver(loc);
         service.Attach(observer);

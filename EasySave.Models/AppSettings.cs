@@ -13,4 +13,5 @@ public class AppSettings
     public List<string> BusinessSoftwareNames { get; set; } = [];
     public List<string> PriorityExtensions { get; set; } = [];
     public long MaxFileSizeForParallelTransferKb { get; set; } = 1000;
+    public int MaxParallelDegree { get; set; } = 3;
 }
