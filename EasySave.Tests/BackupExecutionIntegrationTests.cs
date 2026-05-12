@@ -40,7 +40,7 @@ public class BackupExecutionIntegrationTests : IDisposable
 
         var logger = new EasyLogger(_logDir, new JsonLogFormatter());
         var transferCoordinator = new TransferCoordinator(() => new AppSettings());
-        var service = new BackupService(_configPath, logger, new NoEncryptionService(), new NoOpGuard(), transferCoordinator);
+        var service = new BackupService(_configPath, logger, new NoEncryptionService(), new NoOpGuard(), transferCoordinator, () => new AppSettings());
         service.AddJob(new BackupJobConfig { Name = "J", SourceDir = _src, TargetDir = _dst, Type = BackupType.Full });
 
         // Act
@@ -65,7 +65,7 @@ public class BackupExecutionIntegrationTests : IDisposable
 
         var logger = new EasyLogger(_logDir, new JsonLogFormatter());
         var transferCoordinator = new TransferCoordinator(() => new AppSettings());
-        var service = new BackupService(_configPath, logger, new NoEncryptionService(), new NoOpGuard(), transferCoordinator);
+        var service = new BackupService(_configPath, logger, new NoEncryptionService(), new NoOpGuard(), transferCoordinator, () => new AppSettings());
         service.AddJob(new BackupJobConfig { Name = "J", SourceDir = _src, TargetDir = _dst, Type = BackupType.Differential });
 
         // Act
