@@ -2,7 +2,6 @@ using EasySave.GUI.Commands;
 using EasySave.GUI.Repositories;
 using EasySave.Localization;
 using EasySave.Models;
-using EasyLog;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 
@@ -23,10 +22,6 @@ namespace EasySave.GUI.ViewModels
         private string _selectedEncryptedExtension;
         private RelayCommand _removeEncryptedExtensionCommand;
         private string _statusMessage;
-        private LogDestination _selectedLogDestination;
-        private string _remoteLogServerUrl;
-        private string _remoteLogServerApiKey;
-        private int _remoteLogTimeoutMs;
 
         public LogFormat LogFormat
         {
@@ -91,40 +86,9 @@ namespace EasySave.GUI.ViewModels
         public string SettingsLanguageText     => _loc.Get("settings_language");
         public string SettingsBusinessSoftText => _loc.Get("settings_business_software");
         public string SettingsEncryptedExtText => _loc.Get("settings_encrypted_extensions");
-        public string SettingsLogDestinationText => _loc.Get("settings_log_destination");
-        public string SettingsRemoteServerText => _loc.Get("settings_remote_server");
-        public string SettingsRemoteApiKeyText => _loc.Get("settings_remote_api_key");
-        public string SettingsRemoteTimeoutText => _loc.Get("settings_remote_timeout");
         public string ButtonAddText            => _loc.Get("button_add");
         public string ButtonRemoveText         => _loc.Get("button_remove");
         public string ButtonApplyText          => _loc.Get("button_apply");
-
-        public LogDestination SelectedLogDestination
-        {
-            get => _selectedLogDestination;
-            set { if (SetProperty(ref _selectedLogDestination, value)) _settings.LogDestination = value; }
-        }
-
-        public IReadOnlyList<LogDestination> LogDestinations { get; } =
-            new List<LogDestination> { LogDestination.Local, LogDestination.Centralized, LogDestination.Hybrid };
-
-        public string RemoteLogServerUrl
-        {
-            get => _remoteLogServerUrl;
-            set { if (SetProperty(ref _remoteLogServerUrl, value)) _settings.RemoteLogServerUrl = value; }
-        }
-
-        public string RemoteLogServerApiKey
-        {
-            get => _remoteLogServerApiKey;
-            set { if (SetProperty(ref _remoteLogServerApiKey, value)) _settings.RemoteLogServerApiKey = value; }
-        }
-
-        public int RemoteLogTimeoutMs
-        {
-            get => _remoteLogTimeoutMs;
-            set { if (SetProperty(ref _remoteLogTimeoutMs, value)) _settings.RemoteLogTimeoutMs = value; }
-        }
 
         public ICommand SaveCommand { get; }
         public ICommand AddBusinessSoftwareCommand { get; }
@@ -145,10 +109,6 @@ namespace EasySave.GUI.ViewModels
             _settings = repo.Load();
             _selectedLanguage = string.IsNullOrWhiteSpace(_settings.Language) ? "fr" : _settings.Language;
             _settings.Language = _selectedLanguage;
-            _selectedLogDestination = _settings.LogDestination;
-            _remoteLogServerUrl = _settings.RemoteLogServerUrl;
-            _remoteLogServerApiKey = _settings.RemoteLogServerApiKey;
-            _remoteLogTimeoutMs = _settings.RemoteLogTimeoutMs;
 
             foreach (var name in _settings.BusinessSoftwareNames)
                 BusinessSoftwareNames.Add(name);
@@ -181,10 +141,6 @@ namespace EasySave.GUI.ViewModels
             OnPropertyChanged(nameof(SettingsLanguageText));
             OnPropertyChanged(nameof(SettingsBusinessSoftText));
             OnPropertyChanged(nameof(SettingsEncryptedExtText));
-            OnPropertyChanged(nameof(SettingsLogDestinationText));
-            OnPropertyChanged(nameof(SettingsRemoteServerText));
-            OnPropertyChanged(nameof(SettingsRemoteApiKeyText));
-            OnPropertyChanged(nameof(SettingsRemoteTimeoutText));
             OnPropertyChanged(nameof(ButtonAddText));
             OnPropertyChanged(nameof(ButtonRemoveText));
             OnPropertyChanged(nameof(ButtonApplyText));
