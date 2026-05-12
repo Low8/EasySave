@@ -91,7 +91,12 @@ public class ParallelTransferManager
                 var nextTask = _taskQueue.FirstOrDefault(t => t.FileSize <= _maxParallelFileSize);
                 if (nextTask != null)
                 {
-                    _taskQueue = new Queue<FileTransferTask>(_taskQueue.Where(t => t != nextTask));
+                    var newQueue = new Queue<FileTransferTask>(_taskQueue.Where(t => t != nextTask));
+                    _taskQueue.Clear();
+                    foreach (var item in newQueue)
+                    {
+                        _taskQueue.Enqueue(item);
+                    }
                     _activeTransfers.Add(nextTask);
                     return nextTask;
                 }

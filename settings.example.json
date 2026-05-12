@@ -1,0 +1,26 @@
+{
+  "LogFormat": "Json",
+  "Language": "fr",
+
+  "CryptoSoftPath": "C:\\Program Files\\CryptoSoft\\CryptoSoft.exe",
+  "EncryptionKey": "your-encryption-key-here",
+  "EncryptedExtensions": [
+    ".docx",
+    ".xlsx",
+    ".pptx",
+    ".pdf"
+  ],
+
+  "BusinessSoftwareNames": [
+    "excel",
+    "outlook",
+    "msaccess",
+    "winword",
+    "notepad"
+  ],
+
+  "LogDestination": "Hybrid",
+  "RemoteLogServerUrl": "http://localhost:5000",
+  "RemoteLogServerApiKey": "your-secret-api-key-here",
+  "RemoteLogTimeoutMs": 5000
+}

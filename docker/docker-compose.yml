@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  easysave-logs:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: easysave-log-server
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      LOG_STORAGE_PATH: /app/logs
+    volumes:
+      - easysave-logs-volume:/app/logs
+    restart: unless-stopped
+    networks:
+      - easysave-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  easysave-logs-volume:
+    driver: local
+
+networks:
+  easysave-network:
+    driver: bridge

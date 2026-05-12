@@ -1,4 +1,5 @@
 using EasyLog;
+using EasyLog.Remote;
 using EasySave.GUI.ViewModels;
 using EasySave.Localization;
 using EasySave.Models;
@@ -14,8 +15,18 @@ namespace EasySave.GUI
 {
     public class GUIProgram
     {
+        private static EasySave.Services.SingleInstance.SingleInstanceManager? _singleInstanceManager;
+
         public static void Start()
         {
+            // Enforce single instance
+            _singleInstanceManager = GuiApplicationHelper.EnsureSingleInstance();
+            if (_singleInstanceManager == null)
+            {
+                System.Windows.Application.Current?.Shutdown(1);
+                return;
+            }
+
             var solutionRoot = ResolveSolutionRoot();
             var settingsPath = Path.Combine(solutionRoot, "settings.json");
             var settingsRepo = new JsonAppSettingsRepository(settingsPath);
@@ -29,7 +40,18 @@ namespace EasySave.GUI
                 ? new JsonStateFormatter()
                 : new XmlStateFormatter();
             var logDir = Path.Combine(solutionRoot, "logs", "daily");
-            var logger = new EasyLogger(logDir, formatter);
+
+            // Initialize logger with remote logging support
+            IRemoteLogService remoteLogService = new NoRemoteLogService();
+            if (!string.IsNullOrWhiteSpace(settings.RemoteLogServerUrl))
+            {
+                remoteLogService = new HttpRemoteLogService(
+                    settings.RemoteLogServerUrl,
+                    settings.RemoteLogServerApiKey,
+                    settings.RemoteLogTimeoutMs);
+            }
+
+            var logger = new EasyLogger(logDir, formatter, remoteLogService, settings.LogDestination);
             IEncryptionService encryptionService =
                 !string.IsNullOrWhiteSpace(settings.CryptoSoftPath)
                 && settings.EncryptedExtensions.Count > 0
@@ -49,6 +71,7 @@ namespace EasySave.GUI
             service.Attach(stateWriter);
             var vm = new MainViewModel(service, loc, settingsRepo, configPath, logDir, statePath);
             var window = new MainWindow { DataContext = vm };
+            window.Closed += (s, e) => _singleInstanceManager?.Dispose();
             window.Show();
         }
 

@@ -6,6 +6,7 @@ using EasySave.Services.Guard;
 using EasySave.Localization;
 using EasySave.Models;
 using EasyLog;
+using EasyLog.Remote;
 
 namespace EasySave.ConsoleApp;
 
@@ -13,71 +14,96 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        Console.WriteLine("Choose language / Choisir langue:");
-        Console.WriteLine("1. English");
-        Console.WriteLine("2. Français");
-
-        var lang = Console.ReadLine();
-        string culture = lang == "2" ? "fr" : "en";
-
-        ILocalizationService loc = new ResourceLocalizationService(culture);
-        var fiveUp = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
-        var fourUp = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
-        var solutionRoot = File.Exists(Path.Combine(fiveUp, "EasySave.slnx")) ? fiveUp
-                         : File.Exists(Path.Combine(fourUp, "EasySave.slnx")) ? fourUp
-                         : Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, ".."));
-
-        var settingsPath = Path.Combine(solutionRoot, "settings.json");
-        var appSettings = File.Exists(settingsPath)
-            ? JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(settingsPath)) ?? new AppSettings()
-            : new AppSettings();
-
-        ILogFormatter logFormatter = appSettings.LogFormat == LogFormat.Xml
-            ? new XmlLogFormatter()
-            : new JsonLogFormatter();
-
-        IStateFormatter stateFormatter = appSettings.LogFormat == LogFormat.Xml
-            ? new XmlStateFormatter()
-            : new JsonStateFormatter();
-
-        var logDir = Path.Combine(solutionRoot, "logs", "daily");
-        var logger = new EasyLogger(logDir, logFormatter);
-
-        IEncryptionService encryptionService =
-            !string.IsNullOrWhiteSpace(appSettings.CryptoSoftPath)
-            && appSettings.EncryptedExtensions.Count > 0
-                ? new CryptoSoftEncryptionService(
-                    appSettings.CryptoSoftPath,
-                    appSettings.EncryptionKey,
-                    appSettings.EncryptedExtensions)
-                : new NoEncryptionService();
-
-        IBusinessSoftwareGuard guard =
-            appSettings.BusinessSoftwareNames.Count > 0
-                ? new ProcessBusinessSoftwareGuard(appSettings.BusinessSoftwareNames)
-                : new NoBusinessSoftwareGuard();
-
-        var configPath = Path.Combine(solutionRoot, "config.json");
-        var service = new BackupService(configPath, logger, encryptionService, guard);
-
-        var observer = new ConsoleObserver(loc);
-        service.Attach(observer);
-
-        var statePath = Path.Combine(solutionRoot, "logs", "live", "state.json");
-
-        var stateWriter = new StateFileWriter(statePath, stateFormatter);
-        service.Attach(stateWriter);
-
-        if (args.Length > 0)
+        // Enforce single instance
+        var singleInstanceManager = ConsoleApplicationHelper.EnsureSingleInstance();
+        if (singleInstanceManager == null)
         {
-            var parser = new CommandLineParser();
-            var runner = new CommandLineRunner(service, parser);
-            await runner.Run(args);
+            Environment.Exit(1);
         }
-        else
+
+        try
         {
-            var shell = new InteractiveShell(service, loc, appSettings, settingsPath);
-            await shell.Run();
+            Console.WriteLine("Choose language / Choisir langue:");
+            Console.WriteLine("1. English");
+            Console.WriteLine("2. Français");
+
+            var lang = Console.ReadLine();
+            string culture = lang == "2" ? "fr" : "en";
+
+            ILocalizationService loc = new ResourceLocalizationService(culture);
+            var fiveUp = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+            var fourUp = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+            var solutionRoot = File.Exists(Path.Combine(fiveUp, "EasySave.slnx")) ? fiveUp
+                             : File.Exists(Path.Combine(fourUp, "EasySave.slnx")) ? fourUp
+                             : Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, ".."));
+
+            var settingsPath = Path.Combine(solutionRoot, "settings.json");
+            var appSettings = File.Exists(settingsPath)
+                ? JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(settingsPath)) ?? new AppSettings()
+                : new AppSettings();
+
+            ILogFormatter logFormatter = appSettings.LogFormat == LogFormat.Xml
+                ? new XmlLogFormatter()
+                : new JsonLogFormatter();
+
+            IStateFormatter stateFormatter = appSettings.LogFormat == LogFormat.Xml
+                ? new XmlStateFormatter()
+                : new JsonStateFormatter();
+
+            var logDir = Path.Combine(solutionRoot, "logs", "daily");
+
+            // Initialize logger with remote logging support
+            IRemoteLogService remoteLogService = new NoRemoteLogService();
+            if (!string.IsNullOrWhiteSpace(appSettings.RemoteLogServerUrl))
+            {
+                remoteLogService = new HttpRemoteLogService(
+                    appSettings.RemoteLogServerUrl,
+                    appSettings.RemoteLogServerApiKey,
+                    appSettings.RemoteLogTimeoutMs);
+            }
+
+            var logger = new EasyLogger(logDir, logFormatter, remoteLogService, appSettings.LogDestination);
+
+            IEncryptionService encryptionService =
+                !string.IsNullOrWhiteSpace(appSettings.CryptoSoftPath)
+                && appSettings.EncryptedExtensions.Count > 0
+                    ? new CryptoSoftEncryptionService(
+                        appSettings.CryptoSoftPath,
+                        appSettings.EncryptionKey,
+                        appSettings.EncryptedExtensions)
+                    : new NoEncryptionService();
+
+            IBusinessSoftwareGuard guard =
+                appSettings.BusinessSoftwareNames.Count > 0
+                    ? new ProcessBusinessSoftwareGuard(appSettings.BusinessSoftwareNames)
+                    : new NoBusinessSoftwareGuard();
+
+            var configPath = Path.Combine(solutionRoot, "config.json");
+            var service = new BackupService(configPath, logger, encryptionService, guard);
+
+            var observer = new ConsoleObserver(loc);
+            service.Attach(observer);
+
+            var statePath = Path.Combine(solutionRoot, "logs", "live", "state.json");
+
+            var stateWriter = new StateFileWriter(statePath, stateFormatter);
+            service.Attach(stateWriter);
+
+            if (args.Length > 0)
+            {
+                var parser = new CommandLineParser();
+                var runner = new CommandLineRunner(service, parser);
+                await runner.Run(args);
+            }
+            else
+            {
+                var shell = new InteractiveShell(service, loc, appSettings, settingsPath);
+                await shell.Run();
+            }
+        }
+        finally
+        {
+            singleInstanceManager?.Dispose();
         }
     }
 }

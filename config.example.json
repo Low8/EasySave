@@ -1,0 +1,40 @@
+[
+  {
+    "Name": "DocumentsBackup",
+    "SourceDir": "C:\\Users\\YourName\\Documents",
+    "TargetDir": "D:\\Backups\\Documents",
+    "Type": "Full",
+    "IsActive": true,
+    "PriorityExtensions": [
+      ".docx",
+      ".xlsx",
+      ".pptx",
+      ".pdf"
+    ]
+  },
+  {
+    "Name": "PhotosBackup",
+    "SourceDir": "C:\\Users\\YourName\\Pictures",
+    "TargetDir": "D:\\Backups\\Pictures",
+    "Type": "Differential",
+    "IsActive": true,
+    "PriorityExtensions": [
+      ".jpg",
+      ".png",
+      ".raw"
+    ]
+  },
+  {
+    "Name": "SourceCodeBackup",
+    "SourceDir": "C:\\Projects",
+    "TargetDir": "D:\\Backups\\Projects",
+    "Type": "Full",
+    "IsActive": false,
+    "PriorityExtensions": [
+      ".cs",
+      ".csproj",
+      ".sln",
+      ".json"
+    ]
+  }
+]
