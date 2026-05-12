@@ -7,3 +7,16 @@ public interface IBusinessSoftwareGuard
     /// </summary>
     bool IsRunning();
 }
+
+public interface IEnhancedBusinessSoftwareGuard : IBusinessSoftwareGuard, IDisposable
+{
+    /// <summary>
+    /// Raised when business software is detected.
+    /// </summary>
+    event EventHandler<string>? SoftwareDetected;
+
+    /// <summary>
+    /// Raised when business software is shut down.
+    /// </summary>
+    event EventHandler<string>? SoftwareShutdown;
+}

@@ -7,4 +7,5 @@ public class BackupJobConfig
     public string TargetDir { get; set; } = string.Empty;
     public BackupType Type { get; set; }
     public bool IsActive { get; set; }
+    public List<string> PriorityExtensions { get; set; } = [];
 }
