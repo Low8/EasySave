@@ -1,0 +1,11 @@
+services:
+  easysave-logserver:
+    build:
+      context: ..
+      dockerfile: EasySave.LogServer/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - EASYSAVE_LOG_PORT=8080
+    volumes:
+      - ./logs:/logs

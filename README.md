@@ -12,12 +12,32 @@ The objective is to design and evolve a professional backup solution across mult
 ## Technologies
 
 - Language: **C#**
-- Framework: **.NET 8.0**
+- Framework: **.NET 10.0**
 - IDE: Visual Studio 2022+
 - Version control: **Git / GitHub**
 - Architecture: UML-based design (recommended: ArgoUML)
 
 ---
+
+## Log server (Docker)
+
+### Local run (without Docker)
+
+```bash
+dotnet run --project EasySave.LogServer/EasySave.LogServer.csproj
+```
+
+Logs are written to `EasySave.LogServer/bin/<Configuration>/net10.0/logs/daily`.
+
+### Docker build/run
+
+From the repository root:
+
+```bash
+docker compose -f EasySave.LogServer/docker-compose.yml up --build
+```
+
+Logs are stored in `EasySave.LogServer/logs` on the host (mounted to `/logs` in the container).
 
 ## Project Overview
 
