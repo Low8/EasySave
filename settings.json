@@ -1,5 +1,8 @@
 {
   "LogFormat": "Json",
+  "LogTarget": "Centralized",
+  "LogServerHost": "127.0.0.1",
+  "LogServerPort": 8080,
   "Language": "fr",
   "CryptoSoftPath": "tools\\CryptoSoft.exe",
   "EncryptionKey": "easysave",

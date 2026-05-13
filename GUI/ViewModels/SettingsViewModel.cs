@@ -11,7 +11,7 @@ namespace EasySave.GUI.ViewModels
     {
         private readonly IAppSettingsRepository _repo;
         private readonly Action<string> _changeLanguage;
-        private readonly Action<LogFormat> _applyLogFormat;
+        private readonly Action<AppSettings> _applySettings;
         private AppSettings _settings;
         private ILocalizationService _loc;
         private string _selectedLanguage;
@@ -23,10 +23,18 @@ namespace EasySave.GUI.ViewModels
         private RelayCommand _removeEncryptedExtensionCommand;
         private string _statusMessage;
 
+        public ObservableCollection<KeyValuePair<LogTarget, string>> LogTargetOptions { get; } = new();
+
         public LogFormat LogFormat
         {
             get => _settings.LogFormat;
             set { _settings.LogFormat = value; OnPropertyChanged(); }
+        }
+
+        public LogTarget LogTarget
+        {
+            get => _settings.LogTarget;
+            set { _settings.LogTarget = value; OnPropertyChanged(); }
         }
 
         public IReadOnlyList<LogFormat> LogFormats { get; } =
@@ -84,6 +92,7 @@ namespace EasySave.GUI.ViewModels
         }
 
         public string SettingsLanguageText     => _loc.Get("settings_language");
+        public string SettingsLogTargetText    => _loc.Get("settings_log_target");
         public string SettingsBusinessSoftText => _loc.Get("settings_business_software");
         public string SettingsEncryptedExtText => _loc.Get("settings_encrypted_extensions");
         public string ButtonAddText            => _loc.Get("button_add");
@@ -100,15 +109,17 @@ namespace EasySave.GUI.ViewModels
             ILocalizationService loc,
             IAppSettingsRepository repo,
             Action<string> changeLanguage,
-            Action<LogFormat> applyLogFormat)
+            Action<AppSettings> applySettings)
         {
             _loc = loc;
             _repo = repo;
             _changeLanguage = changeLanguage;
-            _applyLogFormat = applyLogFormat;
+            _applySettings = applySettings;
             _settings = repo.Load();
             _selectedLanguage = string.IsNullOrWhiteSpace(_settings.Language) ? "fr" : _settings.Language;
             _settings.Language = _selectedLanguage;
+
+            UpdateLogTargetOptions();
 
             foreach (var name in _settings.BusinessSoftwareNames)
                 BusinessSoftwareNames.Add(name);
@@ -121,7 +132,7 @@ namespace EasySave.GUI.ViewModels
                 SyncBusinessSoftwareNames();
                 SyncEncryptedExtensions();
                 _repo.Save(_settings);
-                _applyLogFormat?.Invoke(_settings.LogFormat);
+                _applySettings?.Invoke(_settings);
                 _changeLanguage?.Invoke(SelectedLanguage);
                 StatusMessage = _loc.Get("status_applied");
             });
@@ -139,11 +150,13 @@ namespace EasySave.GUI.ViewModels
         {
             _loc = loc;
             OnPropertyChanged(nameof(SettingsLanguageText));
+            OnPropertyChanged(nameof(SettingsLogTargetText));
             OnPropertyChanged(nameof(SettingsBusinessSoftText));
             OnPropertyChanged(nameof(SettingsEncryptedExtText));
             OnPropertyChanged(nameof(ButtonAddText));
             OnPropertyChanged(nameof(ButtonRemoveText));
             OnPropertyChanged(nameof(ButtonApplyText));
+            UpdateLogTargetOptions();
         }
 
         private void AddBusinessSoftware()
@@ -196,5 +209,14 @@ namespace EasySave.GUI.ViewModels
 
         private void SyncEncryptedExtensions() =>
             _settings.EncryptedExtensions = EncryptedExtensions.ToList();
+
+        private void UpdateLogTargetOptions()
+        {
+            LogTargetOptions.Clear();
+            LogTargetOptions.Add(new KeyValuePair<LogTarget, string>(LogTarget.Local, _loc.Get("settings_log_target_local")));
+            LogTargetOptions.Add(new KeyValuePair<LogTarget, string>(LogTarget.Centralized, _loc.Get("settings_log_target_centralized")));
+            LogTargetOptions.Add(new KeyValuePair<LogTarget, string>(LogTarget.LocalAndCentralized, _loc.Get("settings_log_target_both")));
+            OnPropertyChanged(nameof(LogTargetOptions));
+        }
     }
 }
