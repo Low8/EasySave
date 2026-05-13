@@ -18,7 +18,8 @@ public class BackupService : IStateSubject
     private readonly IBusinessSoftwareGuard _guard;
     private readonly ITransferCoordinator _transferCoordinator;
     private readonly List<BackupJobConfig> _jobs = [];
-    private readonly ConcurrentDictionary<int, ManualResetEventSlim> _pauseEvents = new();
+    private readonly ConcurrentDictionary<int, bool> _pauseFlags = new();
+    private readonly ConcurrentDictionary<int, CancellationTokenSource> _stopCtsSources = new();
     private readonly Func<AppSettings> _getSettings;
 
     public BackupService(
@@ -87,17 +88,26 @@ public class BackupService : IStateSubject
 
         var config = _jobs[index];
 
-        var pauseEvent = GetPauseEvent(index);
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        _stopCtsSources[index] = linkedCts;
+        _pauseFlags[index] = false;
 
         IBackupStrategy strategy = config.Type == BackupType.Full
             ? new FullBackupStrategy()
             : new DifferentialBackupStrategy();
 
-        var job = new BackupJob(config, strategy, _encryptionService, _transferCoordinator, pauseEvent, _getSettings);
+        var job = new BackupJob(config, strategy, _encryptionService, _transferCoordinator, _getSettings);
 
-        var allFiles = Directory.GetFiles(config.SourceDir, "*", SearchOption.AllDirectories);
-        int totalFiles = allFiles.Length;
-        long totalSize = allFiles.Sum(f => new FileInfo(f).Length);
+        linkedCts.Token.ThrowIfCancellationRequested();
+        var allFiles = new List<string>();
+        long totalSize = 0;
+        foreach (var f in Directory.EnumerateFiles(config.SourceDir, "*", SearchOption.AllDirectories))
+        {
+            linkedCts.Token.ThrowIfCancellationRequested();
+            allFiles.Add(f);
+            totalSize += new FileInfo(f).Length;
+        }
+        int totalFiles = allFiles.Count;
         int remainingFiles = totalFiles;
         long remainingSize = totalSize;
 
@@ -105,88 +115,100 @@ public class BackupService : IStateSubject
 
         try
         {
-            await foreach (var result in job.Execute(ct))
+            try
             {
-                remainingFiles--;
-                remainingSize -= result.FileSize;
-                float progress = totalFiles == 0 ? 100f : (float)(totalFiles - remainingFiles) / totalFiles * 100f;
-
-                _logger.Log(new LogEntry
+                await foreach (var result in job.Execute(linkedCts.Token))
                 {
-                    Timestamp    = DateTime.Now,
-                    BackupName   = config.Name,
-                    SourcePath   = result.SourcePath,
-                    DestPath     = result.DestPath,
-                    FileSize     = result.FileSize,
-                    TransferMs   = result.TransferMs,
-                    EncryptionMs = result.EncryptionMs
-                });
+                    remainingFiles--;
+                    remainingSize -= result.FileSize;
+                    float progress = totalFiles == 0 ? 100f : (float)(totalFiles - remainingFiles) / totalFiles * 100f;
 
-                Notify(new BackupState
-                {
-                    Name = config.Name,
-                    LastActionTime = DateTime.Now,
-                    Status = result.Success ? BackupStatus.Running : BackupStatus.Error,
-                    TotalFiles = totalFiles,
-                    TotalSize = totalSize,
-                    RemainingFiles = remainingFiles,
-                    RemainingSize = remainingSize,
-                    Progress = progress,
-                    CurrentSource = result.SourcePath,
-                    CurrentDest = result.DestPath,
-                    LastFileSkipped = result.Skipped
-                });
+                    _logger.Log(new LogEntry
+                    {
+                        Timestamp    = DateTime.Now,
+                        BackupName   = config.Name,
+                        SourcePath   = result.SourcePath,
+                        DestPath     = result.DestPath,
+                        FileSize     = result.FileSize,
+                        TransferMs   = result.TransferMs,
+                        EncryptionMs = result.EncryptionMs
+                    });
 
-                if (_guard.IsRunning())
-                {
-                    pauseEvent.Reset();
-                    Console.Error.WriteLine($"[BackupService] Job '{config.Name}' paused: business software detected.");
                     Notify(new BackupState
                     {
                         Name = config.Name,
                         LastActionTime = DateTime.Now,
-                        Status = BackupStatus.Paused,
+                        Status = result.Success ? BackupStatus.Running : BackupStatus.Error,
                         TotalFiles = totalFiles,
                         TotalSize = totalSize,
                         RemainingFiles = remainingFiles,
                         RemainingSize = remainingSize,
-                        Progress = totalFiles == 0 ? 0 : (float)(totalFiles - remainingFiles) / totalFiles * 100,
-                        CurrentSource = string.Empty,
-                        CurrentDest = string.Empty
+                        Progress = progress,
+                        CurrentSource = result.SourcePath,
+                        CurrentDest = result.DestPath,
+                        LastFileSkipped = result.Skipped
                     });
-                    paused = true;
-                    while (_guard.IsRunning())
+
+                    if (_guard.IsRunning())
                     {
-                        ct.ThrowIfCancellationRequested();
-                        await Task.Delay(500, ct);
+                        Console.Error.WriteLine($"[BackupService] Job '{config.Name}' paused: business software detected.");
+                        Notify(new BackupState
+                        {
+                            Name = config.Name,
+                            LastActionTime = DateTime.Now,
+                            Status = BackupStatus.Paused,
+                            TotalFiles = totalFiles,
+                            TotalSize = totalSize,
+                            RemainingFiles = remainingFiles,
+                            RemainingSize = remainingSize,
+                            Progress = totalFiles == 0 ? 0 : (float)(totalFiles - remainingFiles) / totalFiles * 100,
+                            CurrentSource = string.Empty,
+                            CurrentDest = string.Empty
+                        });
+                        paused = true;
+                        while (_guard.IsRunning())
+                        {
+                            linkedCts.Token.ThrowIfCancellationRequested();
+                            await Task.Delay(500, linkedCts.Token);
+                        }
+                        Notify(new BackupState
+                        {
+                            Name           = config.Name,
+                            LastActionTime = DateTime.Now,
+                            Status         = BackupStatus.Running,
+                            TotalFiles     = totalFiles,
+                            TotalSize      = totalSize,
+                            RemainingFiles = remainingFiles,
+                            RemainingSize  = remainingSize,
+                            Progress       = totalFiles == 0 ? 0 : (float)(totalFiles - remainingFiles) / totalFiles * 100,
+                            CurrentSource  = string.Empty,
+                            CurrentDest    = string.Empty
+                        });
+                        paused = false;
                     }
-                    pauseEvent.Set();
-                    Notify(new BackupState
+
+                    while (_pauseFlags.GetValueOrDefault(index, false))
                     {
-                        Name           = config.Name,
-                        LastActionTime = DateTime.Now,
-                        Status         = BackupStatus.Running,
-                        TotalFiles     = totalFiles,
-                        TotalSize      = totalSize,
-                        RemainingFiles = remainingFiles,
-                        RemainingSize  = remainingSize,
-                        Progress       = totalFiles == 0 ? 0 : (float)(totalFiles - remainingFiles) / totalFiles * 100,
-                        CurrentSource  = string.Empty,
-                        CurrentDest    = string.Empty
-                    });
-                    paused = false;
+                        linkedCts.Token.ThrowIfCancellationRequested();
+                        await Task.Delay(100, linkedCts.Token);
+                    }
                 }
             }
-        }
-        catch (OperationCanceledException)
-        {
-            Notify(new BackupState
+            catch (OperationCanceledException)
             {
-                Name = config.Name,
-                LastActionTime = DateTime.Now,
-                Status = BackupStatus.Interrupted
-            });
-            return;
+                Notify(new BackupState
+                {
+                    Name = config.Name,
+                    LastActionTime = DateTime.Now,
+                    Status = BackupStatus.Interrupted
+                });
+                return;
+            }
+        }
+        finally
+        {
+            _stopCtsSources.TryRemove(index, out _);
+            _pauseFlags.TryRemove(index, out _);
         }
 
         if (!paused)
@@ -208,26 +230,25 @@ public class BackupService : IStateSubject
     public void PauseJobs(IEnumerable<int> indices)
     {
         foreach (var index in indices)
-        {
-            GetPauseEvent(index).Reset();
-        }
+            _pauseFlags[index] = true;
     }
 
     public bool ResumeJobs(IEnumerable<int> indices)
     {
-        if (_guard.IsRunning())
-            return false;
-
+        if (_guard.IsRunning()) return false;
         foreach (var index in indices)
-        {
-            GetPauseEvent(index).Set();
-        }
-
+            _pauseFlags[index] = false;
         return true;
     }
 
-    private ManualResetEventSlim GetPauseEvent(int index) =>
-        _pauseEvents.GetOrAdd(index, _ => new ManualResetEventSlim(true));
+    public void StopJob(int index)
+    {
+        if (_stopCtsSources.TryGetValue(index, out var cts))
+        {
+            try { cts.Cancel(); }
+            catch (ObjectDisposedException) { }
+        }
+    }
 
     public async Task RunRange(IEnumerable<int> indices, CancellationToken ct = default)
     {

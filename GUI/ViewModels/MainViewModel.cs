@@ -21,9 +21,6 @@ namespace EasySave.GUI.ViewModels
         private readonly string _logDir;
         private readonly string _statePath;
 
-        private readonly Dictionary<int, CancellationTokenSource> _cts = new();
-        private CancellationTokenSource _runAllCts;
-
         private RelayCommand _runSelectedCommand;
         private RelayCommand _runAllCommand;
         private RelayCommand _pauseSelectedCommand;
@@ -98,10 +95,7 @@ namespace EasySave.GUI.ViewModels
             if (indices.Count == 0) return;
 
             foreach (var index in indices)
-            {
-                if (_cts.TryGetValue(index, out var cts))
-                    cts.Cancel();
-            }
+                _service.StopJob(index);
 
             StatusMessage = _loc.Get("menu_stop") + " " + _loc.Get("status_done");
         }
@@ -280,7 +274,6 @@ namespace EasySave.GUI.ViewModels
             service.Attach(stateWriter);
 
             _service = service;
-            _cts.Clear();
 
             var selectedName = SelectedJob?.Name;
             LoadJobs();
@@ -403,8 +396,6 @@ namespace EasySave.GUI.ViewModels
             if (indices.Count == 0) return;
 
             var cts = new CancellationTokenSource();
-            foreach (var index in indices)
-                _cts[index] = cts;
             StatusMessage = _loc.Get("menu_run") + " " + _loc.Get("status_running");
 
             try
@@ -440,22 +431,20 @@ namespace EasySave.GUI.ViewModels
 
         private void StopAll()
         {
-            _runAllCts?.Cancel();
-            foreach (var cts in _cts.Values)
-                cts.Cancel();
+            for (int i = 0; i < Jobs.Count; i++)
+                _service.StopJob(i);
             StatusMessage = _loc.Get("menu_stop_all") + " " + _loc.Get("status_done");
         }
 
         private async void RunAll()
         {
-            _runAllCts?.Cancel();
-            _runAllCts = new CancellationTokenSource();
+            var indices = Enumerable.Range(0, Jobs.Count).ToList();
+            if (indices.Count == 0) return;
 
-            var indices = Enumerable.Range(0, Jobs.Count);
             StatusMessage = _loc.Get("menu_run_all") + " " + _loc.Get("status_running");
             try
             {
-                await Task.Run(async () => await _service.RunRange(indices, _runAllCts.Token));
+                await Task.Run(async () => await _service.RunRange(indices, CancellationToken.None));
                 StatusMessage = _loc.Get("menu_run_all") + " " + _loc.Get("status_done");
             }
             finally

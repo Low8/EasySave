@@ -2,10 +2,9 @@ namespace EasySave.Services;
 
 internal static class PausableFileCopy
 {
-    public static void Copy(
+    public static async Task Copy(
         string sourceFile,
         string destFile,
-        Action<CancellationToken> waitForPause,
         CancellationToken ct)
     {
         const int bufferSize = 64 * 1024;
@@ -15,11 +14,10 @@ internal static class PausableFileCopy
 
         var buffer = new byte[bufferSize];
         int read;
-        while ((read = source.Read(buffer, 0, buffer.Length)) > 0)
+        while ((read = await source.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
         {
             ct.ThrowIfCancellationRequested();
-            waitForPause(ct);
-            dest.Write(buffer, 0, read);
+            await dest.WriteAsync(buffer.AsMemory(0, read), ct);
         }
     }
 }

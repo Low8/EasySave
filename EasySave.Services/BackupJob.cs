@@ -10,7 +10,6 @@ public class BackupJob
     private readonly IBackupStrategy _strategy;
     private readonly IEncryptionService _encryptionService;
     private readonly ITransferCoordinator _transferCoordinator;
-    private readonly ManualResetEventSlim _pauseEvent;
     private readonly Func<AppSettings> _getSettings;
 
     public BackupJob(
@@ -18,21 +17,25 @@ public class BackupJob
         IBackupStrategy strategy,
         IEncryptionService encryptionService,
         ITransferCoordinator transferCoordinator,
-        ManualResetEventSlim pauseEvent,
         Func<AppSettings> getSettings)
     {
         _config = config;
         _strategy = strategy;
         _encryptionService = encryptionService;
         _transferCoordinator = transferCoordinator;
-        _pauseEvent = pauseEvent;
         _getSettings = getSettings;
     }
 
     public async IAsyncEnumerable<BackupResult> Execute(
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
     {
-        var files = Directory.GetFiles(_config.SourceDir, "*", SearchOption.AllDirectories);
+        ct.ThrowIfCancellationRequested();
+        var files = new List<string>();
+        foreach (var f in Directory.EnumerateFiles(_config.SourceDir, "*", SearchOption.AllDirectories))
+        {
+            ct.ThrowIfCancellationRequested();
+            files.Add(f);
+        }
         foreach (var file in files)
             _transferCoordinator.RegisterFile(file);
         var channel = System.Threading.Channels.Channel.CreateUnbounded<BackupResult>();
@@ -42,45 +45,36 @@ public class BackupJob
             try
             {
                 var maxDegree = _getSettings().MaxParallelDegree;
-                var fileChannel = System.Threading.Channels.Channel.CreateUnbounded<string>();
-
-                foreach (var sourceFile in files)
-                    await fileChannel.Writer.WriteAsync(sourceFile, ct);
-
-                fileChannel.Writer.TryComplete();
+                var fileChannel = System.Threading.Channels.Channel.CreateBounded<string>(
+                    new System.Threading.Channels.BoundedChannelOptions(maxDegree * 2)
+                    {
+                        FullMode = System.Threading.Channels.BoundedChannelFullMode.Wait,
+                        SingleWriter = true,
+                        SingleReader = false
+                    });
 
                 var workers = Enumerable.Range(0, maxDegree)
                     .Select(_ => Task.Run(async () =>
                     {
                         while (await fileChannel.Reader.WaitToReadAsync(ct))
                         {
-                            await WaitForPauseAsync(ct);
+                            ct.ThrowIfCancellationRequested();
                             if (!fileChannel.Reader.TryRead(out var sourceFile))
                                 continue;
 
-                            await WaitForPauseAsync(ct);
+                            ct.ThrowIfCancellationRequested();
                             var relativePath = Path.GetRelativePath(_config.SourceDir, sourceFile);
                             var destFile = Path.Combine(_config.TargetDir, relativePath);
 
                             var dir = Path.GetDirectoryName(destFile);
                             if (dir != null && !Directory.Exists(dir))
                             {
-                                try
-                                {
-                                    Directory.CreateDirectory(dir);
-                                }
-                                catch (IOException)
-                                {
-                                    // Ignorer au cas où un autre thread vient de le créer en même temps
-                                }
+                                try { Directory.CreateDirectory(dir); }
+                                catch (IOException) { }
                             }
 
                             long sourceSize = 0;
-                            try
-                            {
-                                sourceSize = new FileInfo(sourceFile).Length;
-                            }
-                            catch { }
+                            try { sourceSize = new FileInfo(sourceFile).Length; } catch { }
 
                             var sw = System.Diagnostics.Stopwatch.StartNew();
                             bool copied = false;
@@ -88,11 +82,15 @@ public class BackupJob
                             bool acquired = false;
                             try
                             {
-                                await WaitForPauseAsync(ct);
+                                ct.ThrowIfCancellationRequested();
                                 await _transferCoordinator.WaitAsync(sourceFile, sourceSize, ct);
                                 acquired = true;
-                                await WaitForPauseAsync(ct);
-                                copied = _strategy.Execute(sourceFile, destFile, WaitForPause, ct);
+                                ct.ThrowIfCancellationRequested();
+                                copied = await _strategy.Execute(sourceFile, destFile, ct);
+                            }
+                            catch (OperationCanceledException)
+                            {
+                                throw;
                             }
                             catch (Exception)
                             {
@@ -116,17 +114,14 @@ public class BackupJob
                             bool encryptionFailed = false;
                             if (copied && _encryptionService.ShouldEncrypt(destFile))
                             {
-                                var (encryptionSuccess, encryptionElapsed) = _encryptionService.Encrypt(destFile);
+                                ct.ThrowIfCancellationRequested();
+                                var (encryptionSuccess, encryptionElapsed) = await _encryptionService.EncryptAsync(destFile, ct);
                                 encryptionFailed = !encryptionSuccess;
                                 encryptionMs = encryptionElapsed;
                             }
 
                             long fileSize = 0;
-                            try
-                            {
-                                fileSize = new FileInfo(destFile).Length;
-                            }
-                            catch { }
+                            try { fileSize = new FileInfo(destFile).Length; } catch { }
 
                             await channel.Writer.WriteAsync(new BackupResult(
                                 sourceFile, destFile,
@@ -138,7 +133,15 @@ public class BackupJob
                     }, ct))
                     .ToList();
 
-                await Task.WhenAll(workers);
+                foreach (var sourceFile in files)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    await fileChannel.Writer.WriteAsync(sourceFile, ct);
+                }
+
+                fileChannel.Writer.TryComplete();
+
+                await Task.WhenAll(workers).WaitAsync(ct);
             }
             catch (OperationCanceledException)
             {
@@ -158,10 +161,4 @@ public class BackupJob
             yield return result;
         }
     }
-
-    private void WaitForPause(CancellationToken ct) => _pauseEvent.Wait(ct);
-
-    private Task WaitForPauseAsync(CancellationToken ct) =>
-        Task.Run(() => WaitForPause(ct), ct);
-
 }

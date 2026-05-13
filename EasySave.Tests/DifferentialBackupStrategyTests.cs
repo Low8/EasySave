@@ -23,13 +23,13 @@ public class DifferentialBackupStrategyTests : IDisposable
     }
 
     [Fact]
-    public void Execute_CopiesFile_WhenDestinationDoesNotExist()
+    public async Task Execute_CopiesFile_WhenDestinationDoesNotExist()
     {
         // Arrange
         File.WriteAllText(_sourceFile, "content");
 
         // Act
-        var copied = _strategy.Execute(_sourceFile, _destFile, _ => { }, CancellationToken.None);
+        var copied = await _strategy.Execute(_sourceFile, _destFile, CancellationToken.None);
 
         // Assert
         Assert.True(copied);
@@ -38,7 +38,7 @@ public class DifferentialBackupStrategyTests : IDisposable
     }
 
     [Fact]
-    public void Execute_SkipsFile_WhenDestinationIsNewer()
+    public async Task Execute_SkipsFile_WhenDestinationIsNewer()
     {
         // Arrange
         File.WriteAllText(_sourceFile, "source content");
@@ -47,7 +47,7 @@ public class DifferentialBackupStrategyTests : IDisposable
         File.SetLastWriteTime(_destFile,   DateTime.Now);
 
         // Act
-        var copied = _strategy.Execute(_sourceFile, _destFile, _ => { }, CancellationToken.None);
+        var copied = await _strategy.Execute(_sourceFile, _destFile, CancellationToken.None);
 
         // Assert
         Assert.False(copied);
@@ -55,7 +55,7 @@ public class DifferentialBackupStrategyTests : IDisposable
     }
 
     [Fact]
-    public void Execute_CopiesFile_WhenSourceIsNewer()
+    public async Task Execute_CopiesFile_WhenSourceIsNewer()
     {
         // Arrange
         File.WriteAllText(_sourceFile, "source content");
@@ -64,7 +64,7 @@ public class DifferentialBackupStrategyTests : IDisposable
         File.SetLastWriteTime(_sourceFile, DateTime.Now);
 
         // Act
-        var copied = _strategy.Execute(_sourceFile, _destFile, _ => { }, CancellationToken.None);
+        var copied = await _strategy.Execute(_sourceFile, _destFile, CancellationToken.None);
 
         // Assert
         Assert.True(copied);
@@ -72,7 +72,7 @@ public class DifferentialBackupStrategyTests : IDisposable
     }
 
     [Fact]
-    public void Execute_SkipsFile_WhenTimestampsAreEqual()
+    public async Task Execute_SkipsFile_WhenTimestampsAreEqual()
     {
         // Arrange
         var timestamp = new DateTime(2025, 1, 1, 12, 0, 0);
@@ -82,7 +82,7 @@ public class DifferentialBackupStrategyTests : IDisposable
         File.SetLastWriteTime(_destFile,   timestamp);
 
         // Act
-        var copied = _strategy.Execute(_sourceFile, _destFile, _ => { }, CancellationToken.None);
+        var copied = await _strategy.Execute(_sourceFile, _destFile, CancellationToken.None);
 
         // Assert — la condition est strictement >, pas >=
         Assert.False(copied);
