@@ -1,28 +1,20 @@
-﻿using EasySave.GUI.Commands;
+using EasySave.GUI.Commands;
+using EasySave.GUI.Repositories;
+using EasySave.GUI.Services;
 using EasySave.Localization;
 using EasySave.Models;
-using EasySave.Services;
-using EasySave.Services.Encryption;
-using EasySave.Services.Formatters;
-using EasySave.Services.Guard;
-using EasySave.GUI.Repositories;
-using EasyLog;
 using System.Collections.ObjectModel;
+using System.Windows;
+using System.Windows.Threading;
 using System.Windows.Input;
 
 namespace EasySave.GUI.ViewModels
 {
-    public class MainViewModel : ViewModelBase, IStateObserver
+    public class MainViewModel : ViewModelBase
     {
-        private BackupService _service;
+        private readonly IBackupApiClient _apiClient;
         private ILocalizationService _loc;
-        private readonly IAppSettingsRepository _settingsRepo;
-        private readonly string _configPath;
-        private readonly string _logDir;
-        private readonly string _statePath;
-
-        private readonly Dictionary<int, CancellationTokenSource> _cts = new();
-        private CancellationTokenSource _runAllCts;
+        private readonly DispatcherTimer _stateTimer;
 
         private RelayCommand _runSelectedCommand;
         private RelayCommand _runAllCommand;
@@ -145,25 +137,14 @@ namespace EasySave.GUI.ViewModels
         public string TabActionsText => _loc.Get("tab_actions");
 
         public MainViewModel(
-            BackupService service,
+            IBackupApiClient apiClient,
             ILocalizationService loc,
-            IAppSettingsRepository settingsRepo,
-            string configPath,
-            string logDir,
-            string statePath)
+            IAppSettingsRepository settingsRepo)
         {
-            _service = service;
+            _apiClient = apiClient;
             _loc = loc;
-            _settingsRepo = settingsRepo;
-            _configPath = configPath;
-            _logDir = logDir;
-            _statePath = statePath;
 
             Settings = new SettingsViewModel(_loc, settingsRepo, ChangeLanguage, ApplyLogFormat);
-
-            _service.Attach(this);
-
-            LoadJobs();
 
             _runSelectedCommand = new RelayCommand(RunSelected, () => SelectedJob != null);
             _runAllCommand = new RelayCommand(RunAll, () => Jobs.Any());
@@ -174,67 +155,21 @@ namespace EasySave.GUI.ViewModels
             _browseNewTargetCommand = new RelayCommand(() => BrowseFolder(path => NewTargetDir = path));
             _browseEditSourceCommand = new RelayCommand(() => BrowseFolder(path => EditSourceDir = path));
             _browseEditTargetCommand = new RelayCommand(() => BrowseFolder(path => EditTargetDir = path));
+
+            _stateTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(2)
+            };
+            _stateTimer.Tick += async (_, _) => await PollStatesAsync();
+            _stateTimer.Start();
+
+            _ = RefreshJobsAsync();
         }
 
         private void ApplyLogFormat(LogFormat format)
         {
-            _service.Detach(this);
-
-            ILogFormatter formatter = format == LogFormat.Json
-                ? new JsonLogFormatter()
-                : new XmlLogFormatter();
-
-            IStateFormatter stateFormatter = format == LogFormat.Json
-                ? new JsonStateFormatter()
-                : new XmlStateFormatter();
-
-            var settings = _settingsRepo.Load();
-            var logger = new EasyLogger(_logDir, formatter);
-            var encryptionService = CreateEncryptionService(settings);
-            var guard = CreateBusinessSoftwareGuard(settings);
-            var service = new BackupService(_configPath, logger, encryptionService, guard);
-
-            service.Attach(this);
-
-            var stateWriter = new StateFileWriter(_statePath, stateFormatter);
-            service.Attach(stateWriter);
-
-            _service = service;
-            _cts.Clear();
-
-            var selectedName = SelectedJob?.Name;
-            LoadJobs();
-            if (!string.IsNullOrWhiteSpace(selectedName))
-                SelectedJob = Jobs.FirstOrDefault(j => j.Name == selectedName);
-
+            _ = format;
             StatusMessage = _loc.Get("menu_settings") + " " + _loc.Get("status_done");
-        }
-
-        private static IEncryptionService CreateEncryptionService(AppSettings settings)
-        {
-            return !string.IsNullOrWhiteSpace(settings.CryptoSoftPath)
-                && settings.EncryptedExtensions.Count > 0
-                    ? new CryptoSoftEncryptionService(
-                        settings.CryptoSoftPath,
-                        settings.EncryptionKey,
-                        settings.EncryptedExtensions)
-                    : new NoEncryptionService();
-        }
-
-        private static IBusinessSoftwareGuard CreateBusinessSoftwareGuard(AppSettings settings)
-        {
-            return settings.BusinessSoftwareNames.Count > 0
-                ? new ProcessBusinessSoftwareGuard(settings.BusinessSoftwareNames)
-                : new NoBusinessSoftwareGuard();
-        }
-
-        private void LoadJobs()
-        {
-            Jobs.Clear();
-            var jobs = _service.GetJobs().ToList();
-            for (int i = 0; i < jobs.Count; i++)
-                Jobs.Add(new BackupJobViewModel(jobs[i], _loc));
-            UpdateCommandStates();
         }
 
         private void LoadSelectedJobForEdit()
@@ -295,45 +230,45 @@ namespace EasySave.GUI.ViewModels
 
         private async void RunSelected()
         {
-            if (SelectedJob == null) return;
+            if (SelectedJob == null)
+                return;
 
             int index = Jobs.IndexOf(SelectedJob);
+            if (index < 0)
+                return;
 
-            var cts = new CancellationTokenSource();
-            _cts[index] = cts;
             StatusMessage = _loc.Get("menu_run") + " " + _loc.Get("status_running");
 
             try
             {
-                await Task.Run(async () => await _service.RunJob(index, cts.Token));
+                await _apiClient.RunJobAsync(index);
+                SelectedJob.IsActive = true;
                 StatusMessage = _loc.Get("menu_run") + " " + _loc.Get("status_done");
             }
-            finally
+            catch (Exception ex)
             {
-                SelectedJob.IsActive = false;
+                StatusMessage = "Error: " + ex.Message;
             }
         }
 
         private async void RunAll()
         {
-            _runAllCts?.Cancel();
-            _runAllCts = new CancellationTokenSource();
-
-            var indices = Enumerable.Range(0, Jobs.Count);
             StatusMessage = _loc.Get("menu_run_all") + " " + _loc.Get("status_running");
             try
             {
-                await Task.Run(async () => await _service.RunRange(indices, _runAllCts.Token));
+                var tasks = Enumerable.Range(0, Jobs.Count).Select(i => _apiClient.RunJobAsync(i));
+                await Task.WhenAll(tasks);
+                foreach (var job in Jobs)
+                    job.IsActive = true;
                 StatusMessage = _loc.Get("menu_run_all") + " " + _loc.Get("status_done");
             }
-            finally
+            catch (Exception ex)
             {
-                foreach (var job in Jobs)
-                    job.IsActive = false;
+                StatusMessage = "Error: " + ex.Message;
             }
         }
 
-        private void AddJob()
+        private async void AddJob()
         {
             if (string.IsNullOrWhiteSpace(NewJobName)
                 || string.IsNullOrWhiteSpace(NewSourceDir)
@@ -353,8 +288,8 @@ namespace EasySave.GUI.ViewModels
                     IsActive = false
                 };
 
-                _service.AddJob(config);
-                Jobs.Add(new BackupJobViewModel(config, _loc));
+                await _apiClient.AddJobAsync(config);
+                await RefreshJobsAsync();
 
                 StatusMessage = _loc.Get("menu_create") + " " + _loc.Get("status_done");
 
@@ -371,7 +306,7 @@ namespace EasySave.GUI.ViewModels
             }
         }
 
-        private void UpdateSelectedJob()
+        private async void UpdateSelectedJob()
         {
             if (SelectedJob == null)
                 return;
@@ -391,7 +326,7 @@ namespace EasySave.GUI.ViewModels
                     IsActive = SelectedJob.IsActive
                 };
 
-                _service.UpdateJob(index, config);
+                await _apiClient.UpdateJobAsync(index, config);
                 SelectedJob.UpdateFromConfig(config);
                 StatusMessage = _loc.Get("menu_edit") + " " + _loc.Get("status_done");
             }
@@ -401,7 +336,7 @@ namespace EasySave.GUI.ViewModels
             }
         }
 
-        private void RemoveSelectedJob()
+        private async void RemoveSelectedJob()
         {
             if (SelectedJob == null)
                 return;
@@ -412,7 +347,7 @@ namespace EasySave.GUI.ViewModels
 
             try
             {
-                _service.RemoveJob(index);
+                await _apiClient.RemoveJobAsync(index);
                 Jobs.RemoveAt(index);
                 SelectedJob = null;
                 StatusMessage = _loc.Get("menu_delete") + " " + _loc.Get("status_done");
@@ -430,21 +365,44 @@ namespace EasySave.GUI.ViewModels
                 setPath(dialog.SelectedPath);
         }
 
-        public void Update(BackupState state)
+        private async Task RefreshJobsAsync()
         {
-            var dispatcher = System.Windows.Application.Current?.Dispatcher;
-            if (dispatcher == null || dispatcher.CheckAccess())
+            try
             {
-                var job = Jobs.FirstOrDefault(j => j.Name == state.Name);
-                job?.UpdateFromState(state);
-                return;
-            }
+                var jobs = await _apiClient.GetJobsAsync();
+                var selectedName = SelectedJob?.Name;
+                Jobs.Clear();
+                foreach (var job in jobs)
+                    Jobs.Add(new BackupJobViewModel(job, _loc));
 
-            dispatcher.Invoke(() =>
+                if (!string.IsNullOrWhiteSpace(selectedName))
+                    SelectedJob = Jobs.FirstOrDefault(j => j.Name == selectedName);
+                UpdateCommandStates();
+            }
+            catch (Exception ex)
             {
-                var job = Jobs.FirstOrDefault(j => j.Name == state.Name);
-                job?.UpdateFromState(state);
-            });
+                StatusMessage = "Error: " + ex.Message;
+            }
+        }
+
+        private async Task PollStatesAsync()
+        {
+            if (Jobs.Count == 0)
+                return;
+
+            try
+            {
+                var states = await _apiClient.GetStatesAsync();
+                foreach (var state in states)
+                {
+                    var job = Jobs.FirstOrDefault(j => j.Name == state.Name);
+                    job?.UpdateFromState(state);
+                }
+            }
+            catch
+            {
+                // Keep UI responsive if server is temporarily unreachable.
+            }
         }
     }
 }

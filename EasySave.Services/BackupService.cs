@@ -14,14 +14,21 @@ public class BackupService : IStateSubject
     private readonly EasyLogger _logger;
     private readonly IEncryptionService _encryptionService;
     private readonly IBusinessSoftwareGuard _guard;
+    private readonly Func<string, string> _pathMapper;
     private readonly List<BackupJobConfig> _jobs = [];
 
-    public BackupService(string configPath, EasyLogger logger, IEncryptionService encryptionService, IBusinessSoftwareGuard guard)
+    public BackupService(
+        string configPath,
+        EasyLogger logger,
+        IEncryptionService encryptionService,
+        IBusinessSoftwareGuard guard,
+        Func<string, string>? pathMapper = null)
     {
         _repository = new JsonBackupJobRepository(configPath);
         _logger = logger;
         _encryptionService = encryptionService;
         _guard = guard;
+        _pathMapper = pathMapper ?? (path => path);
         LoadJobs();
     }
 
@@ -70,6 +77,14 @@ public class BackupService : IStateSubject
             throw new ArgumentOutOfRangeException(nameof(index));
 
         var config = _jobs[index];
+        var runtimeConfig = new BackupJobConfig
+        {
+            Name = config.Name,
+            Type = config.Type,
+            IsActive = config.IsActive,
+            SourceDir = _pathMapper(config.SourceDir),
+            TargetDir = _pathMapper(config.TargetDir)
+        };
 
         if (_guard.IsRunning())
         {
@@ -81,9 +96,9 @@ public class BackupService : IStateSubject
             ? new FullBackupStrategy()
             : new DifferentialBackupStrategy();
 
-        var job = new BackupJob(config, strategy, _encryptionService);
+        var job = new BackupJob(runtimeConfig, strategy, _encryptionService);
 
-        var allFiles = Directory.GetFiles(config.SourceDir, "*", SearchOption.AllDirectories);
+        var allFiles = Directory.GetFiles(runtimeConfig.SourceDir, "*", SearchOption.AllDirectories);
         int totalFiles = allFiles.Length;
         long totalSize = allFiles.Sum(f => new FileInfo(f).Length);
         int remainingFiles = totalFiles;
