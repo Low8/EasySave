@@ -2,11 +2,11 @@ using System.Collections.Concurrent;
 using EasyLog;
 using EasySave.Models;
 using EasySave.Services;
+using EasySave.Services.Interfaces;
 using EasySave.Services.Encryption;
 using EasySave.Services.Formatters;
 using EasySave.Services.Guard;
-
-var builder = WebApplication.CreateBuilder(args);
+using EasySaveServer;
 
 var dataDir = Environment.GetEnvironmentVariable("EASYSAVE_DATA_DIR");
 if (string.IsNullOrWhiteSpace(dataDir))
@@ -37,63 +37,26 @@ var backupService = new BackupService(configPath, logger, encryptionService, gua
 var stateCache = new ConcurrentDictionary<string, BackupState>(StringComparer.OrdinalIgnoreCase);
 backupService.Attach(new InMemoryStateObserver(stateCache));
 
-var app = builder.Build();
+var socketPort = int.TryParse(Environment.GetEnvironmentVariable("EASYSAVE_SOCKET_PORT"), out var p) ? p : 9090;
 
-app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
-
-app.MapGet("/api/jobs", () => Results.Ok(backupService.GetJobs()));
-
-app.MapPost("/api/jobs", (BackupJobConfig job) =>
+using var cts = new CancellationTokenSource();
+Console.CancelKeyPress += (_, e) =>
 {
-    backupService.AddJob(job);
-    return Results.Created("/api/jobs", job);
-});
+    e.Cancel = true;
+    cts.Cancel();
+};
 
-app.MapPut("/api/jobs/{index:int}", (int index, BackupJobConfig job) =>
+Console.WriteLine($"[EasySaveServer] Data directory: {dataDir}");
+Console.WriteLine($"[EasySaveServer] Socket port: {socketPort}");
+
+try
 {
-    backupService.UpdateJob(index, job);
-    return Results.NoContent();
-});
-
-app.MapDelete("/api/jobs/{index:int}", (int index) =>
+    await SocketServer.RunAsync(socketPort, backupService, stateCache, cts.Token).ConfigureAwait(false);
+}
+catch (OperationCanceledException)
 {
-    backupService.RemoveJob(index);
-    return Results.NoContent();
-});
-
-app.MapPost("/api/jobs/{index:int}/run", (int index) =>
-{
-    _ = Task.Run(async () =>
-    {
-        try
-        {
-            await backupService.RunJob(index);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"[EasySaveServer] Failed to run job at index {index}: {ex.Message}");
-            var failedJob = backupService.GetJobs().ElementAtOrDefault(index);
-            if (failedJob is not null)
-            {
-                stateCache[failedJob.Name] = new BackupState
-                {
-                    Name = failedJob.Name,
-                    Status = BackupStatus.Error,
-                    LastActionTime = DateTime.Now
-                };
-            }
-        }
-    });
-    return Results.Accepted();
-});
-
-app.MapGet("/api/states", () => Results.Ok(stateCache.Values.OrderBy(s => s.Name)));
-app.MapGet("/api/states/{name}", (string name) =>
-{
-    return stateCache.TryGetValue(name, out var state) ? Results.Ok(state) : Results.NotFound();
-});
-
-app.Run();
+    Console.WriteLine("[EasySaveServer] Stopped.");
+}
 
 static class SettingsLoader
 {

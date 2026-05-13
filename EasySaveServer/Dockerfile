@@ -11,15 +11,15 @@ RUN dotnet restore EasySaveServer/EasySaveServer.csproj
 COPY . .
 RUN dotnet publish EasySaveServer/EasySaveServer.csproj -c Release -o /app/publish
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+FROM mcr.microsoft.com/dotnet/runtime:10.0 AS runtime
 WORKDIR /app
 
-ENV ASPNETCORE_URLS=http://0.0.0.0:8080
 ENV EASYSAVE_DATA_DIR=/data
+ENV EASYSAVE_SOCKET_PORT=9090
 
 COPY --from=build /app/publish .
 
-EXPOSE 8080
+EXPOSE 9090
 VOLUME ["/data"]
 
 ENTRYPOINT ["dotnet", "EasySaveServer.dll"]

@@ -4,9 +4,10 @@ services:
       context: .
       dockerfile: EasySaveServer/Dockerfile
     ports:
-      - "8080:8080"
+      - "9090:9090"
     environment:
       - EASYSAVE_DATA_DIR=/data
+      - EASYSAVE_SOCKET_PORT=9090
       - EASYSAVE_CONTAINER_HOST_ROOT=/host
     volumes:
       - ./server-data:/data

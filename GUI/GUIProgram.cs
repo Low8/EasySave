@@ -4,7 +4,6 @@ using EasySave.GUI.Repositories;
 using EasySave.GUI.Services;
 using GUI.Views;
 using System.IO;
-using System.Net.Http;
 
 namespace EasySave.GUI
 {
@@ -18,17 +17,14 @@ namespace EasySave.GUI
             var settings = settingsRepo.Load();
             var language = string.IsNullOrWhiteSpace(settings.Language) ? "fr" : settings.Language;
             var loc = new ResourceLocalizationService(language);
-            var apiBaseUrl = Environment.GetEnvironmentVariable("EASYSAVE_API_URL");
-            if (string.IsNullOrWhiteSpace(apiBaseUrl))
-                apiBaseUrl = "http://localhost:8080/";
-            if (!apiBaseUrl.EndsWith('/'))
-                apiBaseUrl += "/";
+            var socketHost = Environment.GetEnvironmentVariable("EASYSAVE_SOCKET_HOST");
+            if (string.IsNullOrWhiteSpace(socketHost))
+                socketHost = "127.0.0.1";
+            var socketPort = int.TryParse(Environment.GetEnvironmentVariable("EASYSAVE_SOCKET_PORT"), out var sp)
+                ? sp
+                : 9090;
 
-            var httpClient = new HttpClient
-            {
-                BaseAddress = new Uri(apiBaseUrl)
-            };
-            IBackupApiClient apiClient = new HttpBackupApiClient(httpClient);
+            IBackupApiClient apiClient = new SocketBackupClient(socketHost, socketPort);
             var vm = new MainViewModel(apiClient, loc, settingsRepo);
             var window = new MainWindow { DataContext = vm };
             window.Show();
