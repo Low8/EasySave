@@ -390,10 +390,15 @@ namespace EasySave.GUI.ViewModels
             var indices = selected
                 .Select(job => Jobs.IndexOf(job))
                 .Where(index => index >= 0)
+                .Where(index => !_service.IsJobRunning(index))
                 .Distinct()
                 .ToList();
 
-            if (indices.Count == 0) return;
+            if (indices.Count == 0)
+            {
+                StatusMessage = _loc.Get("error_invalid_input");
+                return;
+            }
 
             var cts = new CancellationTokenSource();
             StatusMessage = _loc.Get("menu_run") + " " + _loc.Get("status_running");
@@ -438,8 +443,14 @@ namespace EasySave.GUI.ViewModels
 
         private async void RunAll()
         {
-            var indices = Enumerable.Range(0, Jobs.Count).ToList();
-            if (indices.Count == 0) return;
+            var indices = Enumerable.Range(0, Jobs.Count)
+                .Where(i => !_service.IsJobRunning(i))
+                .ToList();
+            if (indices.Count == 0)
+            {
+                StatusMessage = _loc.Get("error_invalid_input");
+                return;
+            }
 
             StatusMessage = _loc.Get("menu_run_all") + " " + _loc.Get("status_running");
             try

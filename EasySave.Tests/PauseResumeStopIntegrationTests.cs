@@ -2,6 +2,7 @@ using EasySave.Models;
 using EasySave.Services;
 using EasySave.Services.Encryption;
 using EasySave.Services.Guard;
+using EasySave.Services.Interfaces;
 using EasyLog;
 
 namespace EasySave.Tests;
@@ -34,7 +35,7 @@ public class PauseResumeStopIntegrationTests : IDisposable
             new NoEncryptionService(), new NoGuard(),
             transferCoordinator, () => settings);
 
-        for (int i = 0; i < 20; i++)
+        for (int i = 0; i < 10; i++)
             File.WriteAllBytes(Path.Combine(_src, $"file{i:D2}.dat"), new byte[1024]);
 
         _service.AddJob(new BackupJobConfig
@@ -54,32 +55,41 @@ public class PauseResumeStopIntegrationTests : IDisposable
     [Fact]
     public async Task Pause_StopsTransferAfterCurrentFile()
     {
+        var settings = new AppSettings { MaxParallelDegree = 1 };
+        var logger = new EasyLogger(_logDir, new JsonLogFormatter());
+        var transferCoordinator = new TransferCoordinator(() => settings);
+        var svc = new BackupService(
+            _configPath, logger,
+            new NoEncryptionService(), new NoGuard(),
+            transferCoordinator, () => settings,
+            _ => new SlowFullBackupStrategy());
+
         int runCount = 0;
         int gateReleased = 0;
         var gate = new SemaphoreSlim(0, 1);
         var cts = new CancellationTokenSource();
 
-        _service.Attach(new LambdaObserver(state =>
+        svc.Attach(new LambdaObserver(state =>
         {
             if (state.Status == BackupStatus.Running &&
-                Interlocked.Increment(ref runCount) >= 3 &&
+                Interlocked.Increment(ref runCount) >= 2 &&
                 Interlocked.Exchange(ref gateReleased, 1) == 0)
                 gate.Release();
         }));
 
-        var jobTask = _service.RunJob(0, cts.Token);
+        var jobTask = svc.RunJob(0, cts.Token);
 
         Assert.True(await gate.WaitAsync(TimeSpan.FromSeconds(10)), "Gate not released in time");
-        _service.PauseJobs([0]);
+        svc.PauseJobs([0]);
 
-        await Task.Delay(200);
+        await Task.Delay(300);
 
         int copiedCount = Directory.GetFiles(_dst).Length;
 
         cts.Cancel();
         await Task.WhenAny(jobTask, Task.Delay(3000));
 
-        Assert.InRange(copiedCount, 3, 19);
+        Assert.InRange(copiedCount, 2, 5);
     }
 
     [Fact]
@@ -110,7 +120,7 @@ public class PauseResumeStopIntegrationTests : IDisposable
 
         Assert.True(await completedGate.WaitAsync(TimeSpan.FromSeconds(30)), "Job did not complete after resume");
 
-        Assert.Equal(20, Directory.GetFiles(_dst).Length);
+        Assert.Equal(10, Directory.GetFiles(_dst).Length);
     }
 
     [Fact]
@@ -144,6 +154,16 @@ public class PauseResumeStopIntegrationTests : IDisposable
             long dstSize = new FileInfo(destFile).Length;
             Assert.True(dstSize == srcSize || dstSize == 0,
                 $"{Path.GetFileName(destFile)}: size {dstSize} is neither complete ({srcSize}) nor empty");
+        }
+    }
+
+    private sealed class SlowFullBackupStrategy : IBackupStrategy
+    {
+        private readonly FullBackupStrategy _inner = new();
+        public async Task<bool> Execute(string sourceFile, string destFile, CancellationToken ct)
+        {
+            await Task.Delay(50, ct);
+            return await _inner.Execute(sourceFile, destFile, ct);
         }
     }
 
