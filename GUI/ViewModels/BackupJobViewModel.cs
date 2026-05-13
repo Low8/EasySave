@@ -1,4 +1,4 @@
-﻿using EasySave.Localization;
+using EasySave.Localization;
 using EasySave.Models;
 
 namespace EasySave.GUI.ViewModels
@@ -48,10 +48,10 @@ namespace EasySave.GUI.ViewModels
         private long _remainingSize;
         public long RemainingSize { get => _remainingSize; set => SetProperty(ref _remainingSize, value); }
 
-        private string _currentFile;
+        private string _currentFile = string.Empty;
         public string CurrentFile { get => _currentFile; set => SetProperty(ref _currentFile, value); }
 
-        private string _currentDest;
+        private string _currentDest = string.Empty;
         public string CurrentDest { get => _currentDest; set => SetProperty(ref _currentDest, value); }
 
         private bool _lastFileSkipped;

@@ -1,4 +1,4 @@
-﻿using EasySave.GUI.Commands;
+using EasySave.GUI.Commands;
 using EasySave.Localization;
 using EasySave.Models;
 using EasySave.Services;
@@ -40,8 +40,8 @@ namespace EasySave.GUI.ViewModels
         public ObservableCollection<BackupJobViewModel> Jobs { get; } = new();
         public ObservableCollection<BackupJobViewModel> SelectedJobs { get; } = new();
 
-        private BackupJobViewModel _selectedJob;
-        public BackupJobViewModel SelectedJob
+        private BackupJobViewModel? _selectedJob;
+        public BackupJobViewModel? SelectedJob
         {
             get => _selectedJob;
             set
@@ -122,21 +122,21 @@ namespace EasySave.GUI.ViewModels
         public IReadOnlyList<BackupType> BackupTypes { get; } =
             new List<BackupType> { BackupType.Full, BackupType.Differential };
 
-        private string _newJobName;
+        private string _newJobName = string.Empty;
         public string NewJobName
         {
             get => _newJobName;
             set => SetProperty(ref _newJobName, value);
         }
 
-        private string _newSourceDir;
+        private string _newSourceDir = string.Empty;
         public string NewSourceDir
         {
             get => _newSourceDir;
             set => SetProperty(ref _newSourceDir, value);
         }
 
-        private string _newTargetDir;
+        private string _newTargetDir = string.Empty;
         public string NewTargetDir
         {
             get => _newTargetDir;
@@ -150,21 +150,21 @@ namespace EasySave.GUI.ViewModels
             set => SetProperty(ref _newJobType, value);
         }
 
-        private string _editJobName;
+        private string _editJobName = string.Empty;
         public string EditJobName
         {
             get => _editJobName;
             set => SetProperty(ref _editJobName, value);
         }
 
-        private string _editSourceDir;
+        private string _editSourceDir = string.Empty;
         public string EditSourceDir
         {
             get => _editSourceDir;
             set => SetProperty(ref _editSourceDir, value);
         }
 
-        private string _editTargetDir;
+        private string _editTargetDir = string.Empty;
         public string EditTargetDir
         {
             get => _editTargetDir;
@@ -179,13 +179,14 @@ namespace EasySave.GUI.ViewModels
         }
 
 
-        private string _statusMessage;
+        private string _statusMessage = string.Empty;
         public string StatusMessage
         {
             get => _statusMessage;
             set => SetProperty(ref _statusMessage, value);
         }
 
+        public string MenuListText => _loc.Get("menu_list");
         public string MenuTitleText => _loc.Get("menu_title");
         public string MenuCreateText => _loc.Get("menu_create");
         public string MenuEditText => _loc.Get("menu_edit");
@@ -366,6 +367,7 @@ namespace EasySave.GUI.ViewModels
 
         private void RefreshLocalization()
         {
+            OnPropertyChanged(nameof(MenuListText));
             OnPropertyChanged(nameof(MenuCreateText));
             OnPropertyChanged(nameof(MenuTitleText));
             OnPropertyChanged(nameof(MenuEditText));

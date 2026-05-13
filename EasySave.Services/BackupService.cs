@@ -25,7 +25,7 @@ public class BackupService : IStateSubject
 
     public BackupService(
         string configPath,
-        EasyLogger logger,
+        ILogWriter logger,
         IEncryptionService encryptionService,
         IBusinessSoftwareGuard guard,
         ITransferCoordinator transferCoordinator,

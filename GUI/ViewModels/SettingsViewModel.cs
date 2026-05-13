@@ -14,17 +14,17 @@ namespace EasySave.GUI.ViewModels
         private readonly Action<AppSettings> _applySettings;
         private AppSettings _settings;
         private ILocalizationService _loc;
-        private string _selectedLanguage;
-        private string _newBusinessSoftwareName;
-        private string _selectedBusinessSoftwareName;
-        private RelayCommand _removeBusinessSoftwareCommand;
-        private string _newEncryptedExtension;
-        private string _selectedEncryptedExtension;
-        private RelayCommand _removeEncryptedExtensionCommand;
-        private string _newPriorityExtension;
-        private string _selectedPriorityExtension;
-        private RelayCommand _removePriorityExtensionCommand;
-        private string _statusMessage;
+        private string _selectedLanguage = string.Empty;
+        private string _newBusinessSoftwareName = string.Empty;
+        private string _selectedBusinessSoftwareName = string.Empty;
+        private RelayCommand _removeBusinessSoftwareCommand = null!;
+        private string _newEncryptedExtension = string.Empty;
+        private string _selectedEncryptedExtension = string.Empty;
+        private RelayCommand _removeEncryptedExtensionCommand = null!;
+        private string _newPriorityExtension = string.Empty;
+        private string _selectedPriorityExtension = string.Empty;
+        private RelayCommand _removePriorityExtensionCommand = null!;
+        private string _statusMessage = string.Empty;
 
         public ObservableCollection<KeyValuePair<LogTarget, string>> LogTargetOptions { get; } = new();
 
@@ -221,7 +221,7 @@ namespace EasySave.GUI.ViewModels
         {
             if (string.IsNullOrWhiteSpace(SelectedBusinessSoftwareName)) return;
             BusinessSoftwareNames.Remove(SelectedBusinessSoftwareName);
-            SelectedBusinessSoftwareName = null;
+            SelectedBusinessSoftwareName = string.Empty;
             SyncBusinessSoftwareNames();
             _removeBusinessSoftwareCommand?.RaiseCanExecuteChanged();
             StatusMessage = _loc.Get("status_removed");
@@ -244,7 +244,7 @@ namespace EasySave.GUI.ViewModels
         {
             if (string.IsNullOrWhiteSpace(SelectedEncryptedExtension)) return;
             EncryptedExtensions.Remove(SelectedEncryptedExtension);
-            SelectedEncryptedExtension = null;
+            SelectedEncryptedExtension = string.Empty;
             SyncEncryptedExtensions();
             _removeEncryptedExtensionCommand?.RaiseCanExecuteChanged();
             StatusMessage = _loc.Get("status_removed");
@@ -267,7 +267,7 @@ namespace EasySave.GUI.ViewModels
         {
             if (string.IsNullOrWhiteSpace(SelectedPriorityExtension)) return;
             PriorityExtensions.Remove(SelectedPriorityExtension);
-            SelectedPriorityExtension = null;
+            SelectedPriorityExtension = string.Empty;
             SyncPriorityExtensions();
             _removePriorityExtensionCommand?.RaiseCanExecuteChanged();
             StatusMessage = _loc.Get("status_removed");
