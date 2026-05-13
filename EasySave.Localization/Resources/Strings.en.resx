@@ -133,10 +133,37 @@
     <value>Delete job</value>
   </data>
   <data name="menu_run" xml:space="preserve">
-    <value>Run job</value>
+    <value>Run selected jobs</value>
   </data>
   <data name="menu_run_all" xml:space="preserve">
     <value>Run all jobs</value>
+  </data>
+  <data name="menu_pause" xml:space="preserve">
+    <value>Pause jobs</value>
+  </data>
+  <data name="menu_resume" xml:space="preserve">
+    <value>Resume jobs</value>
+  </data>
+  <data name="menu_stop" xml:space="preserve">
+    <value>Stop jobs</value>
+  </data>
+  <data name="menu_pause_all" xml:space="preserve">
+    <value>Pause all jobs</value>
+  </data>
+  <data name="menu_resume_all" xml:space="preserve">
+    <value>Resume all jobs</value>
+  </data>
+  <data name="menu_stop_all" xml:space="preserve">
+    <value>Stop all jobs</value>
+  </data>
+  <data name="menu_selected_jobs" xml:space="preserve">
+    <value>Selected jobs</value>
+  </data>
+  <data name="menu_all_jobs" xml:space="preserve">
+    <value>All jobs</value>
+  </data>
+  <data name="status_blocked" xml:space="preserve">
+    <value>blocked</value>
   </data>
   <data name="menu_quit" xml:space="preserve">
     <value>Quit</value>
@@ -209,6 +236,12 @@
   </data>
   <data name="settings_encrypted_extensions" xml:space="preserve">
     <value>Encrypted extensions (e.g. .txt)</value>
+  </data>
+  <data name="settings_priority_extensions" xml:space="preserve">
+    <value>Priority extensions (e.g. .docx)</value>
+  </data>
+  <data name="settings_max_parallel_kb" xml:space="preserve">
+    <value>Max size for parallel transfer (KB)</value>
   </data>
   <data name="button_add" xml:space="preserve">
     <value>Add</value>

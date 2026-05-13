@@ -15,4 +15,7 @@ public class AppSettings
     public string EncryptionKey { get; set; } = string.Empty;
     public List<string> EncryptedExtensions { get; set; } = [];
     public List<string> BusinessSoftwareNames { get; set; } = [];
+    public List<string> PriorityExtensions { get; set; } = [];
+    public long MaxFileSizeForParallelTransferKb { get; set; } = 1000;
+    public int MaxParallelDegree { get; set; } = 3;
 }
