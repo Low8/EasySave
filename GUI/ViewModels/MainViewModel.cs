@@ -159,7 +159,7 @@ namespace EasySave.GUI.ViewModels
             _logDir = logDir;
             _statePath = statePath;
 
-            Settings = new SettingsViewModel(_loc, settingsRepo, ChangeLanguage, ApplyLogFormat);
+            Settings = new SettingsViewModel(_loc, settingsRepo, ChangeLanguage, ApplyLogSettings);
 
             _service.Attach(this);
 
@@ -176,20 +176,19 @@ namespace EasySave.GUI.ViewModels
             _browseEditTargetCommand = new RelayCommand(() => BrowseFolder(path => EditTargetDir = path));
         }
 
-        private void ApplyLogFormat(LogFormat format)
+        private void ApplyLogSettings(AppSettings settings)
         {
             _service.Detach(this);
 
-            ILogFormatter formatter = format == LogFormat.Json
+            ILogFormatter formatter = settings.LogFormat == LogFormat.Json
                 ? new JsonLogFormatter()
                 : new XmlLogFormatter();
 
-            IStateFormatter stateFormatter = format == LogFormat.Json
+            IStateFormatter stateFormatter = settings.LogFormat == LogFormat.Json
                 ? new JsonStateFormatter()
                 : new XmlStateFormatter();
 
-            var settings = _settingsRepo.Load();
-            var logger = new EasyLogger(_logDir, formatter);
+            var logger = CreateLogWriter(settings, formatter);
             var encryptionService = CreateEncryptionService(settings);
             var guard = CreateBusinessSoftwareGuard(settings);
             var service = new BackupService(_configPath, logger, encryptionService, guard);
@@ -208,6 +207,19 @@ namespace EasySave.GUI.ViewModels
                 SelectedJob = Jobs.FirstOrDefault(j => j.Name == selectedName);
 
             StatusMessage = _loc.Get("menu_settings") + " " + _loc.Get("status_done");
+        }
+
+        private ILogWriter CreateLogWriter(AppSettings settings, ILogFormatter formatter)
+        {
+            var localLogger = new EasyLogger(_logDir, formatter);
+            var remoteLogger = new SocketLogWriter(settings.LogServerHost, settings.LogServerPort, formatter);
+
+            return settings.LogTarget switch
+            {
+                LogTarget.Centralized => remoteLogger,
+                LogTarget.LocalAndCentralized => new CompositeLogWriter(new ILogWriter[] { localLogger, remoteLogger }),
+                _ => localLogger
+            };
         }
 
         private static IEncryptionService CreateEncryptionService(AppSettings settings)

@@ -171,8 +171,14 @@
   <data name="settings_current_format" xml:space="preserve">
     <value>Format de log actuel</value>
   </data>
+  <data name="settings_current_target" xml:space="preserve">
+    <value>Cible de log actuelle</value>
+  </data>
   <data name="settings_choose_format" xml:space="preserve">
     <value>Choisissez le format (1=JSON, 2=XML) :</value>
+  </data>
+  <data name="settings_choose_target" xml:space="preserve">
+    <value>Choisissez la cible (1=Local, 2=Centralisé, 3=Les deux) :</value>
   </data>
   <data name="settings_format_saved" xml:space="preserve">
     <value>Format mis à jour. Redémarrez pour appliquer.</value>
@@ -185,6 +191,18 @@
   </data>
   <data name="settings_language" xml:space="preserve">
     <value>Langue</value>
+  </data>
+  <data name="settings_log_target" xml:space="preserve">
+    <value>Cible des logs</value>
+  </data>
+  <data name="settings_log_target_local" xml:space="preserve">
+    <value>Local uniquement</value>
+  </data>
+  <data name="settings_log_target_centralized" xml:space="preserve">
+    <value>Centralisé uniquement</value>
+  </data>
+  <data name="settings_log_target_both" xml:space="preserve">
+    <value>Local et centralisé</value>
   </data>
   <data name="settings_business_software" xml:space="preserve">
     <value>Logiciels métier</value>

@@ -13,6 +13,8 @@ public class XmlLogFormatter : ILogFormatter
                 entries.Select(e => new XElement("LogEntry",
                     new XElement("Timestamp", e.Timestamp.ToString("o")),
                     new XElement("BackupName", e.BackupName),
+                    new XElement("MachineName", e.MachineName),
+                    new XElement("UserName", e.UserName),
                     new XElement("SourcePath", e.SourcePath),
                     new XElement("DestPath", e.DestPath),
                     new XElement("FileSize", e.FileSize),
@@ -34,6 +36,8 @@ public class XmlLogFormatter : ILogFormatter
             {
                 Timestamp  = DateTime.TryParse(e.Element("Timestamp")?.Value, out var ts) ? ts : DateTime.MinValue,
                 BackupName = e.Element("BackupName")?.Value ?? "",
+                MachineName = e.Element("MachineName")?.Value ?? "",
+                UserName = e.Element("UserName")?.Value ?? "",
                 SourcePath = e.Element("SourcePath")?.Value ?? "",
                 DestPath   = e.Element("DestPath")?.Value ?? "",
                 FileSize     = long.TryParse(e.Element("FileSize")?.Value, out var fs) ? fs : 0,

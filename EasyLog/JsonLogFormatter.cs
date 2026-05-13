@@ -4,7 +4,7 @@ namespace EasyLog;
 
 public class JsonLogFormatter : ILogFormatter
 {
-    private static readonly JsonSerializerOptions _options = new() { WriteIndented = true };
+    private static readonly JsonSerializerOptions _options = new JsonSerializerOptions { WriteIndented = true };
 
     public string FileExtension => "json";
 

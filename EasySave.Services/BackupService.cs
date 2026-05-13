@@ -11,12 +11,12 @@ public class BackupService : IStateSubject
 {
     private readonly List<IStateObserver> _observers = [];
     private readonly IBackupJobRepository _repository;
-    private readonly EasyLogger _logger;
+    private readonly ILogWriter _logger;
     private readonly IEncryptionService _encryptionService;
     private readonly IBusinessSoftwareGuard _guard;
     private readonly List<BackupJobConfig> _jobs = [];
 
-    public BackupService(string configPath, EasyLogger logger, IEncryptionService encryptionService, IBusinessSoftwareGuard guard)
+    public BackupService(string configPath, ILogWriter logger, IEncryptionService encryptionService, IBusinessSoftwareGuard guard)
     {
         _repository = new JsonBackupJobRepository(configPath);
         _logger = logger;
@@ -101,6 +101,8 @@ public class BackupService : IStateSubject
             {
                 Timestamp    = DateTime.Now,
                 BackupName   = config.Name,
+                MachineName  = Environment.MachineName,
+                UserName     = Environment.UserName,
                 SourcePath   = result.SourcePath,
                 DestPath     = result.DestPath,
                 FileSize     = result.FileSize,
