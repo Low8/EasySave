@@ -88,7 +88,7 @@ public class BackupService : IStateSubject
 
         var config = _jobs[index];
 
-        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         _stopCtsSources[index] = linkedCts;
         _pauseFlags[index] = false;
 
@@ -119,6 +119,7 @@ public class BackupService : IStateSubject
             {
                 await foreach (var result in job.Execute(linkedCts.Token))
                 {
+                    linkedCts.Token.ThrowIfCancellationRequested();
                     remainingFiles--;
                     remainingSize -= result.FileSize;
                     float progress = totalFiles == 0 ? 100f : (float)(totalFiles - remainingFiles) / totalFiles * 100f;
@@ -209,6 +210,7 @@ public class BackupService : IStateSubject
         {
             _stopCtsSources.TryRemove(index, out _);
             _pauseFlags.TryRemove(index, out _);
+            linkedCts.Dispose();
         }
 
         if (!paused)
@@ -240,6 +242,8 @@ public class BackupService : IStateSubject
             _pauseFlags[index] = false;
         return true;
     }
+
+    public bool IsJobRunning(int index) => _stopCtsSources.ContainsKey(index);
 
     public void StopJob(int index)
     {
