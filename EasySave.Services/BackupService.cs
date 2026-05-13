@@ -128,21 +128,13 @@ public class BackupService : IStateSubject
                     remainingFiles--;
                     remainingSize -= result.FileSize;
                     float progress = totalFiles == 0 ? 100f : (float)(totalFiles - remainingFiles) / totalFiles * 100f;
-                Timestamp    = DateTime.Now,
-                BackupName   = config.Name,
-                MachineName  = Environment.MachineName,
-                UserName     = Environment.UserName,
-                SourcePath   = result.SourcePath,
-                DestPath     = result.DestPath,
-                FileSize     = result.FileSize,
-                TransferMs   = result.TransferMs,
-                EncryptionMs = result.EncryptionMs
-            });
 
                     _logger.Log(new LogEntry
                     {
                         Timestamp    = DateTime.Now,
                         BackupName   = config.Name,
+                        MachineName  = Environment.MachineName,
+                        UserName     = Environment.UserName,
                         SourcePath   = result.SourcePath,
                         DestPath     = result.DestPath,
                         FileSize     = result.FileSize,
