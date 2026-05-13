@@ -21,6 +21,7 @@ public class BackupService : IStateSubject
     private readonly ConcurrentDictionary<int, bool> _pauseFlags = new();
     private readonly ConcurrentDictionary<int, CancellationTokenSource> _stopCtsSources = new();
     private readonly Func<AppSettings> _getSettings;
+    private readonly Func<BackupJobConfig, IBackupStrategy>? _strategyFactory;
 
     public BackupService(
         string configPath,
@@ -28,7 +29,8 @@ public class BackupService : IStateSubject
         IEncryptionService encryptionService,
         IBusinessSoftwareGuard guard,
         ITransferCoordinator transferCoordinator,
-        Func<AppSettings> getSettings)
+        Func<AppSettings> getSettings,
+        Func<BackupJobConfig, IBackupStrategy>? strategyFactory = null)
     {
         _repository = new JsonBackupJobRepository(configPath);
         _logger = logger;
@@ -36,6 +38,7 @@ public class BackupService : IStateSubject
         _guard = guard;
         _transferCoordinator = transferCoordinator;
         _getSettings = getSettings;
+        _strategyFactory = strategyFactory;
         LoadJobs();
     }
 
@@ -92,9 +95,11 @@ public class BackupService : IStateSubject
         _stopCtsSources[index] = linkedCts;
         _pauseFlags[index] = false;
 
-        IBackupStrategy strategy = config.Type == BackupType.Full
-            ? new FullBackupStrategy()
-            : new DifferentialBackupStrategy();
+        IBackupStrategy strategy = _strategyFactory != null
+            ? _strategyFactory(config)
+            : config.Type == BackupType.Full
+                ? new FullBackupStrategy()
+                : new DifferentialBackupStrategy();
 
         var job = new BackupJob(config, strategy, _encryptionService, _transferCoordinator, _getSettings);
 
