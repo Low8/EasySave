@@ -15,5 +15,6 @@
     "qsdgf"
   ],
   "PriorityExtensions": [],
-  "MaxFileSizeForParallelTransferKb": 1000
+  "MaxFileSizeForParallelTransferKb": 1000,
+  "MaxParallelDegree": 3
 }

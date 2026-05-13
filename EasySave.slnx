@@ -4,10 +4,10 @@
   </Folder>
   <Project Path="EasyLog/EasyLog.csproj" />
   <Project Path="EasySave.Console/EasySave.Console.csproj" Id="7d6ae672-a510-4ba7-a386-acbafd6d6fec" />
-  <Project Path="EasySave.LogServer/EasySave.LogServer.csproj" Id="4c5f7363-af17-4899-b544-f3a872752b9f" />
   <Project Path="EasySave.Localization/EasySave.Localization.csproj" />
   <Project Path="EasySave.Models/EasySave.Models.csproj" />
   <Project Path="EasySave.Services/EasySave.Services.csproj" />
   <Project Path="EasySave.Tests/EasySave.Tests.csproj" />
+  <Project Path="EasySaveServer/EasySaveServer.csproj" Id="738b38be-fe09-4009-9884-11a44f1dbfce" />
   <Project Path="GUI/GUI.csproj" Id="91ebd9a5-c66e-4b50-b4ba-c78e9f452a70" />
 </Solution>
