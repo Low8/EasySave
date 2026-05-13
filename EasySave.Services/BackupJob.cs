@@ -38,7 +38,13 @@ public class BackupJob
         }
         foreach (var file in files)
             _transferCoordinator.RegisterFile(file);
-        var channel = System.Threading.Channels.Channel.CreateUnbounded<BackupResult>();
+        var channel = System.Threading.Channels.Channel.CreateBounded<BackupResult>(
+            new System.Threading.Channels.BoundedChannelOptions(1)
+            {
+                FullMode = System.Threading.Channels.BoundedChannelFullMode.Wait,
+                SingleWriter = false,
+                SingleReader = true
+            });
 
         _ = Task.Run(async () =>
         {
