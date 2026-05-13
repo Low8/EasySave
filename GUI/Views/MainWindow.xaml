@@ -133,6 +133,13 @@
                         <TextBlock Text="{Binding SettingsCurrentFormatText}" />
                         <ComboBox ItemsSource="{Binding Settings.LogFormats}" SelectedItem="{Binding Settings.LogFormat}" Margin="0,0,0,6" />
 
+                        <TextBlock Text="{Binding Settings.SettingsLogTargetText}" />
+                        <ComboBox ItemsSource="{Binding Settings.LogTargetOptions}"
+                                  SelectedValue="{Binding Settings.LogTarget}"
+                                  DisplayMemberPath="Value"
+                                  SelectedValuePath="Key"
+                                  Margin="0,0,0,6" />
+
                         <TextBlock Text="{Binding Settings.SettingsLanguageText}" />
                         <ComboBox ItemsSource="{Binding Settings.LanguageOptions}" SelectedItem="{Binding Settings.SelectedLanguage}" Margin="0,0,0,6" />
 

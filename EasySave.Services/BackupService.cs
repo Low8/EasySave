@@ -13,7 +13,7 @@ public class BackupService : IStateSubject
     private readonly List<IStateObserver> _observers = [];
     private readonly object _observersLock = new();
     private readonly IBackupJobRepository _repository;
-    private readonly EasyLogger _logger;
+    private readonly ILogWriter _logger;
     private readonly IEncryptionService _encryptionService;
     private readonly IBusinessSoftwareGuard _guard;
     private readonly ITransferCoordinator _transferCoordinator;
@@ -128,6 +128,16 @@ public class BackupService : IStateSubject
                     remainingFiles--;
                     remainingSize -= result.FileSize;
                     float progress = totalFiles == 0 ? 100f : (float)(totalFiles - remainingFiles) / totalFiles * 100f;
+                Timestamp    = DateTime.Now,
+                BackupName   = config.Name,
+                MachineName  = Environment.MachineName,
+                UserName     = Environment.UserName,
+                SourcePath   = result.SourcePath,
+                DestPath     = result.DestPath,
+                FileSize     = result.FileSize,
+                TransferMs   = result.TransferMs,
+                EncryptionMs = result.EncryptionMs
+            });
 
                     _logger.Log(new LogEntry
                     {
