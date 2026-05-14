@@ -22,7 +22,7 @@ public class BackupService : IStateSubject
     private readonly ConcurrentDictionary<int, CancellationTokenSource> _stopCtsSources = new();
     private readonly Func<AppSettings> _getSettings;
     private readonly Func<BackupJobConfig, IBackupStrategy>? _strategyFactory;
-    private static readonly TimeSpan NotifyInterval = TimeSpan.FromMilliseconds(200);
+    private readonly TimeSpan _notifyInterval;
 
     public BackupService(
         string configPath,
@@ -31,7 +31,8 @@ public class BackupService : IStateSubject
         IBusinessSoftwareGuard guard,
         ITransferCoordinator transferCoordinator,
         Func<AppSettings> getSettings,
-        Func<BackupJobConfig, IBackupStrategy>? strategyFactory = null)
+        Func<BackupJobConfig, IBackupStrategy>? strategyFactory = null,
+        TimeSpan? notifyInterval = null)
     {
         _repository = new JsonBackupJobRepository(configPath);
         _logger = logger;
@@ -40,6 +41,7 @@ public class BackupService : IStateSubject
         _transferCoordinator = transferCoordinator;
         _getSettings = getSettings;
         _strategyFactory = strategyFactory;
+        _notifyInterval = notifyInterval ?? TimeSpan.FromMilliseconds(200);
         LoadJobs();
     }
 
@@ -158,7 +160,7 @@ public class BackupService : IStateSubject
                         CurrentDest    = result.DestPath,
                         LastFileSkipped = result.Skipped
                     };
-                    if (DateTime.Now - lastProgressNotify >= NotifyInterval
+                    if (DateTime.Now - lastProgressNotify >= _notifyInterval
                         || progressState.Status != BackupStatus.Running)
                     {
                         lastProgressNotify = DateTime.Now;
