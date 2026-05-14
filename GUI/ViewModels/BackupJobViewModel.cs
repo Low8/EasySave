@@ -33,6 +33,8 @@ namespace EasySave.GUI.ViewModels
         private BackupStatus _status;
         public BackupStatus Status { get => _status; set => SetProperty(ref _status, value); }
 
+        public event Action? StatusChanged;
+
         private DateTime _lastActionTime;
         public DateTime LastActionTime { get => _lastActionTime; set => SetProperty(ref _lastActionTime, value); }
 
@@ -103,7 +105,13 @@ namespace EasySave.GUI.ViewModels
         public void UpdateFromState(BackupState state)
         {
             Progress = state.Progress;
-            Status = state.Status;
+            if (_status != state.Status)
+            {
+                Status = state.Status;
+                IsPaused = state.Status == BackupStatus.Paused;
+                IsActive = state.Status == BackupStatus.Running;
+                StatusChanged?.Invoke();
+            }
             LastActionTime = state.LastActionTime;
             TotalFiles = state.TotalFiles;
             TotalSize = state.TotalSize;
@@ -112,8 +120,6 @@ namespace EasySave.GUI.ViewModels
             CurrentFile = state.CurrentSource;
             CurrentDest = state.CurrentDest;
             LastFileSkipped = state.LastFileSkipped;
-            IsPaused = state.Status == BackupStatus.Paused;
-            IsActive = state.Status == BackupStatus.Running;
 
             OnPropertyChanged(nameof(ProgressText));
             OnPropertyChanged(nameof(RemainingFilesText));

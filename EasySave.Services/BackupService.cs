@@ -22,10 +22,11 @@ public class BackupService : IStateSubject
     private readonly ConcurrentDictionary<int, CancellationTokenSource> _stopCtsSources = new();
     private readonly Func<AppSettings> _getSettings;
     private readonly Func<BackupJobConfig, IBackupStrategy>? _strategyFactory;
+    private static readonly TimeSpan NotifyInterval = TimeSpan.FromMilliseconds(200);
 
     public BackupService(
         string configPath,
-        EasyLogger logger,
+        ILogWriter logger,
         IEncryptionService encryptionService,
         IBusinessSoftwareGuard guard,
         ITransferCoordinator transferCoordinator,
@@ -91,6 +92,7 @@ public class BackupService : IStateSubject
 
         var config = _jobs[index];
 
+        var lastProgressNotify = DateTime.MinValue;
         var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         _stopCtsSources[index] = linkedCts;
         _pauseFlags[index] = false;
@@ -142,20 +144,27 @@ public class BackupService : IStateSubject
                         EncryptionMs = result.EncryptionMs
                     });
 
-                    Notify(new BackupState
+                    var progressState = new BackupState
                     {
-                        Name = config.Name,
+                        Name           = config.Name,
                         LastActionTime = DateTime.Now,
-                        Status = result.Success ? BackupStatus.Running : BackupStatus.Error,
-                        TotalFiles = totalFiles,
-                        TotalSize = totalSize,
+                        Status         = result.Success ? BackupStatus.Running : BackupStatus.Error,
+                        TotalFiles     = totalFiles,
+                        TotalSize      = totalSize,
                         RemainingFiles = remainingFiles,
-                        RemainingSize = remainingSize,
-                        Progress = progress,
-                        CurrentSource = result.SourcePath,
-                        CurrentDest = result.DestPath,
+                        RemainingSize  = remainingSize,
+                        Progress       = progress,
+                        CurrentSource  = result.SourcePath,
+                        CurrentDest    = result.DestPath,
                         LastFileSkipped = result.Skipped
-                    });
+                    };
+                    if (DateTime.Now - lastProgressNotify >= NotifyInterval
+                        || progressState.Status != BackupStatus.Running)
+                    {
+                        lastProgressNotify = DateTime.Now;
+                        Notify(progressState);
+                    }
+                    File.AppendAllText("/tmp/perf.log", $"[Perf] {result.SourcePath} | {result.TransferMs}ms | {DateTime.Now:HH:mm:ss.fff}\n");
 
                     if (_guard.IsRunning())
                     {
@@ -195,10 +204,39 @@ public class BackupService : IStateSubject
                         paused = false;
                     }
 
-                    while (_pauseFlags.GetValueOrDefault(index, false))
+                    if (_pauseFlags.GetValueOrDefault(index, false))
                     {
-                        linkedCts.Token.ThrowIfCancellationRequested();
-                        await Task.Delay(100, linkedCts.Token);
+                        Notify(new BackupState
+                        {
+                            Name           = config.Name,
+                            LastActionTime = DateTime.Now,
+                            Status         = BackupStatus.Paused,
+                            TotalFiles     = totalFiles,
+                            TotalSize      = totalSize,
+                            RemainingFiles = remainingFiles,
+                            RemainingSize  = remainingSize,
+                            Progress       = totalFiles == 0 ? 0 : (float)(totalFiles - remainingFiles) / totalFiles * 100,
+                            CurrentSource  = string.Empty,
+                            CurrentDest    = string.Empty
+                        });
+                        while (_pauseFlags.GetValueOrDefault(index, false))
+                        {
+                            linkedCts.Token.ThrowIfCancellationRequested();
+                            await Task.Delay(100, linkedCts.Token);
+                        }
+                        Notify(new BackupState
+                        {
+                            Name           = config.Name,
+                            LastActionTime = DateTime.Now,
+                            Status         = BackupStatus.Running,
+                            TotalFiles     = totalFiles,
+                            TotalSize      = totalSize,
+                            RemainingFiles = remainingFiles,
+                            RemainingSize  = remainingSize,
+                            Progress       = totalFiles == 0 ? 0 : (float)(totalFiles - remainingFiles) / totalFiles * 100,
+                            CurrentSource  = string.Empty,
+                            CurrentDest    = string.Empty
+                        });
                     }
                 }
             }
