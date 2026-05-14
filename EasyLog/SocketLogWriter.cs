@@ -12,6 +12,7 @@ public class SocketLogWriter : ILogWriter, IDisposable
     private readonly object _lock = new();
     private TcpClient? _client;
     private StreamWriter? _writer;
+    private DateTime _nextRetry = DateTime.MinValue;
 
     public SocketLogWriter(string host, int port, ILogFormatter formatter)
     {
@@ -43,6 +44,7 @@ public class SocketLogWriter : ILogWriter, IDisposable
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"[SocketLogWriter] {ex.Message}");
+                _nextRetry = DateTime.Now.AddSeconds(30);
                 DisposeClient();
             }
         }
@@ -51,6 +53,9 @@ public class SocketLogWriter : ILogWriter, IDisposable
     private void EnsureConnected()
     {
         if (_client is { Connected: true })
+            return;
+
+        if (DateTime.Now < _nextRetry)
             return;
 
         DisposeClient();

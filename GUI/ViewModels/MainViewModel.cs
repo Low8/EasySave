@@ -232,14 +232,15 @@ namespace EasySave.GUI.ViewModels
 
             SelectedJobs.CollectionChanged += (_, _) => UpdateCommandStates();
 
-            _runSelectedCommand = new RelayCommand(RunSelected, () => SelectedJobs.Count > 0);
-            _runAllCommand = new RelayCommand(RunAll, () => Jobs.Any());
-            _pauseSelectedCommand = new RelayCommand(PauseSelected, () => SelectedJobs.Count > 0);
-            _resumeSelectedCommand = new RelayCommand(ResumeSelected, () => SelectedJobs.Count > 0);
-            _stopSelectedCommand = new RelayCommand(StopSelected, () => SelectedJobs.Count > 0);
-            _pauseAllCommand = new RelayCommand(PauseAll, () => Jobs.Any());
-            _resumeAllCommand = new RelayCommand(ResumeAll, () => Jobs.Any());
-            _stopAllCommand = new RelayCommand(StopAll, () => Jobs.Any());
+            _runSelectedCommand    = new RelayCommand(RunSelected,    () => SelectedJobs.Any(j => j.Status is BackupStatus.Idle or BackupStatus.Completed or BackupStatus.Interrupted));
+            _runAllCommand         = new RelayCommand(RunAll,         () => !Jobs.Any(j => j.Status is BackupStatus.Running or BackupStatus.Paused)
+                                                                             && Jobs.Any(j => j.Status is BackupStatus.Idle or BackupStatus.Completed or BackupStatus.Interrupted));
+            _pauseSelectedCommand  = new RelayCommand(PauseSelected,  () => SelectedJobs.Any(j => j.Status == BackupStatus.Running));
+            _resumeSelectedCommand = new RelayCommand(ResumeSelected, () => SelectedJobs.Any(j => j.Status == BackupStatus.Paused));
+            _stopSelectedCommand   = new RelayCommand(StopSelected,   () => SelectedJobs.Any(j => j.Status is BackupStatus.Running or BackupStatus.Paused));
+            _pauseAllCommand       = new RelayCommand(PauseAll,       () => Jobs.Any(j => j.Status == BackupStatus.Running));
+            _resumeAllCommand      = new RelayCommand(ResumeAll,      () => Jobs.Any(j => j.Status == BackupStatus.Paused));
+            _stopAllCommand        = new RelayCommand(StopAll,        () => Jobs.Any(j => j.Status is BackupStatus.Running or BackupStatus.Paused));
             _addJobCommand = new RelayCommand(AddJob);
             _updateJobCommand = new RelayCommand(UpdateSelectedJob, () => SelectedJob != null);
             _removeJobCommand = new RelayCommand(RemoveSelectedJob, () => SelectedJob != null);
@@ -319,7 +320,11 @@ namespace EasySave.GUI.ViewModels
             SelectedJobs.Clear();
             var jobs = _service.GetJobs().ToList();
             for (int i = 0; i < jobs.Count; i++)
-                Jobs.Add(new BackupJobViewModel(jobs[i], _loc));
+            {
+                var vm = new BackupJobViewModel(jobs[i], _loc);
+                vm.StatusChanged += UpdateCommandStates;
+                Jobs.Add(vm);
+            }
             UpdateCommandStates();
         }
 
@@ -498,7 +503,9 @@ namespace EasySave.GUI.ViewModels
                 };
 
                 _service.AddJob(config);
-                Jobs.Add(new BackupJobViewModel(config, _loc));
+                var vm = new BackupJobViewModel(config, _loc);
+                vm.StatusChanged += UpdateCommandStates;
+                Jobs.Add(vm);
 
                 StatusMessage = _loc.Get("menu_create") + " " + _loc.Get("status_done");
 
@@ -584,7 +591,7 @@ namespace EasySave.GUI.ViewModels
                 return;
             }
 
-            dispatcher.Invoke(() =>
+            dispatcher.BeginInvoke(() =>
             {
                 var job = Jobs.FirstOrDefault(j => j.Name == state.Name);
                 job?.UpdateFromState(state);
