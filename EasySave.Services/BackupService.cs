@@ -126,12 +126,6 @@ public class BackupService : IStateSubject
         {
             try
             {
-                if (_guard.IsRunning())
-                {
-                    while (_guard.IsRunning())
-                        await Task.Delay(500, linkedCts.Token);
-                }
-
                 await foreach (var result in job.Execute(linkedCts.Token))
                 {
                     linkedCts.Token.ThrowIfCancellationRequested();
@@ -166,11 +160,14 @@ public class BackupService : IStateSubject
                         CurrentDest    = result.DestPath,
                         LastFileSkipped = result.Skipped
                     };
-                    if (DateTime.Now - lastProgressNotify >= _notifyInterval)
+                    if (DateTime.Now - lastProgressNotify >= _notifyInterval
+                        || progressState.Status != BackupStatus.Running)
                     {
                         lastProgressNotify = DateTime.Now;
                         Notify(progressState);
                     }
+                    File.AppendAllText("/tmp/perf.log", $"[Perf] {result.SourcePath} | {result.TransferMs}ms | {DateTime.Now:HH:mm:ss.fff}\n");
+
                     if (_guard.IsRunning())
                     {
                         Console.Error.WriteLine($"[BackupService] Job '{config.Name}' paused: business software detected.");

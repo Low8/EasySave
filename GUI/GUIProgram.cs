@@ -22,11 +22,14 @@ namespace EasySave.GUI
             var settings = settingsRepo.Load();
             var language = string.IsNullOrWhiteSpace(settings.Language) ? "fr" : settings.Language;
             var loc = new ResourceLocalizationService(language);
-            IStateFormatter stateFormatter = settings.LogFormat == LogFormat.Xml
-                ? new XmlStateFormatter()
-                : new JsonStateFormatter();
+            ILogFormatter formatter = settings.LogFormat == LogFormat.Json
+                ? new JsonLogFormatter()
+                : new XmlLogFormatter();
+            IStateFormatter stateFormatter = settings.LogFormat == LogFormat.Json
+                ? new JsonStateFormatter()
+                : new XmlStateFormatter();
             var logDir = Path.Combine(solutionRoot, "logs", "daily");
-            var logger = CreateLogWriter(settings, logDir);
+            var logger = CreateLogWriter(settings, logDir, formatter);
             IEncryptionService encryptionService =
                 !string.IsNullOrWhiteSpace(settings.CryptoSoftPath)
                 && settings.EncryptedExtensions.Count > 0
@@ -59,19 +62,10 @@ namespace EasySave.GUI
                 : Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, ".."));
         }
 
-        private static ILogWriter CreateLogWriter(AppSettings settings, string logDir)
+        private static ILogWriter CreateLogWriter(AppSettings settings, string logDir, ILogFormatter formatter)
         {
-            ILogWriter localLogger = settings.LogFormat switch
-            {
-                LogFormat.Xml => new EasyLogger(logDir, new XmlLogFormatter()),
-                LogFormat.JsonAndXml => new CompositeLogWriter(new ILogWriter[]
-                {
-                    new EasyLogger(logDir, new JsonLogFormatter()),
-                    new EasyLogger(logDir, new XmlLogFormatter())
-                }),
-                _ => new EasyLogger(logDir, new JsonLogFormatter())
-            };
-            var remoteLogger = new SocketLogWriter(settings.LogServerHost, settings.LogServerPort, new JsonLogFormatter());
+            var localLogger = new EasyLogger(logDir, formatter);
+            var remoteLogger = new SocketLogWriter(settings.LogServerHost, settings.LogServerPort, formatter);
 
             return settings.LogTarget switch
             {
