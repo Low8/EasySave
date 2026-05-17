@@ -1,6 +1,6 @@
 namespace EasyLog;
 
-public class EasyLogger
+public class EasyLogger : ILogWriter
 {
     private readonly string _logDirectory;
     private readonly ILogFormatter _formatter;

@@ -133,10 +133,37 @@
     <value>Delete job</value>
   </data>
   <data name="menu_run" xml:space="preserve">
-    <value>Run job</value>
+    <value>Run selected jobs</value>
   </data>
   <data name="menu_run_all" xml:space="preserve">
     <value>Run all jobs</value>
+  </data>
+  <data name="menu_pause" xml:space="preserve">
+    <value>Pause jobs</value>
+  </data>
+  <data name="menu_resume" xml:space="preserve">
+    <value>Resume jobs</value>
+  </data>
+  <data name="menu_stop" xml:space="preserve">
+    <value>Stop jobs</value>
+  </data>
+  <data name="menu_pause_all" xml:space="preserve">
+    <value>Pause all jobs</value>
+  </data>
+  <data name="menu_resume_all" xml:space="preserve">
+    <value>Resume all jobs</value>
+  </data>
+  <data name="menu_stop_all" xml:space="preserve">
+    <value>Stop all jobs</value>
+  </data>
+  <data name="menu_selected_jobs" xml:space="preserve">
+    <value>Selected jobs</value>
+  </data>
+  <data name="menu_all_jobs" xml:space="preserve">
+    <value>All jobs</value>
+  </data>
+  <data name="status_blocked" xml:space="preserve">
+    <value>blocked</value>
   </data>
   <data name="menu_quit" xml:space="preserve">
     <value>Quit</value>
@@ -171,8 +198,14 @@
   <data name="settings_current_format" xml:space="preserve">
     <value>Current log format</value>
   </data>
+  <data name="settings_current_target" xml:space="preserve">
+    <value>Current log target</value>
+  </data>
   <data name="settings_choose_format" xml:space="preserve">
     <value>Choose format (1=JSON, 2=XML):</value>
+  </data>
+  <data name="settings_choose_target" xml:space="preserve">
+    <value>Choose target (1=Local, 2=Centralized, 3=Both):</value>
   </data>
   <data name="settings_format_saved" xml:space="preserve">
     <value>Log format updated. Restart to apply.</value>
@@ -186,11 +219,29 @@
   <data name="settings_language" xml:space="preserve">
     <value>Language</value>
   </data>
+  <data name="settings_log_target" xml:space="preserve">
+    <value>Log target</value>
+  </data>
+  <data name="settings_log_target_local" xml:space="preserve">
+    <value>Local only</value>
+  </data>
+  <data name="settings_log_target_centralized" xml:space="preserve">
+    <value>Centralized only</value>
+  </data>
+  <data name="settings_log_target_both" xml:space="preserve">
+    <value>Local and centralized</value>
+  </data>
   <data name="settings_business_software" xml:space="preserve">
     <value>Business software</value>
   </data>
   <data name="settings_encrypted_extensions" xml:space="preserve">
     <value>Encrypted extensions (e.g. .txt)</value>
+  </data>
+  <data name="settings_priority_extensions" xml:space="preserve">
+    <value>Priority extensions (e.g. .docx)</value>
+  </data>
+  <data name="settings_max_parallel_kb" xml:space="preserve">
+    <value>Max size for parallel transfer (KB)</value>
   </data>
   <data name="button_add" xml:space="preserve">
     <value>Add</value>

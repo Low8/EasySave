@@ -29,12 +29,15 @@ namespace EasySave.GUI
                 ? new JsonStateFormatter()
                 : new XmlStateFormatter();
             var logDir = Path.Combine(solutionRoot, "logs", "daily");
-            var logger = new EasyLogger(logDir, formatter);
+            var logger = CreateLogWriter(settings, logDir, formatter);
+            var cryptoSoftPath = Path.IsPathRooted(settings.CryptoSoftPath)
+                ? settings.CryptoSoftPath
+                : Path.Combine(solutionRoot, settings.CryptoSoftPath);
             IEncryptionService encryptionService =
                 !string.IsNullOrWhiteSpace(settings.CryptoSoftPath)
                 && settings.EncryptedExtensions.Count > 0
                     ? new CryptoSoftEncryptionService(
-                        settings.CryptoSoftPath,
+                        cryptoSoftPath,
                         settings.EncryptionKey,
                         settings.EncryptedExtensions)
                     : new NoEncryptionService();
@@ -43,7 +46,8 @@ namespace EasySave.GUI
                     ? new ProcessBusinessSoftwareGuard(settings.BusinessSoftwareNames)
                     : new NoBusinessSoftwareGuard();
             var configPath = Path.Combine(solutionRoot, "config.json");
-            var service = new BackupService(configPath, logger, encryptionService, guard);
+            var transferCoordinator = new TransferCoordinator(() => settingsRepo.Load());
+            var service = new BackupService(configPath, logger, encryptionService, guard, transferCoordinator, () => settingsRepo.Load());
             var statePath = Path.Combine(solutionRoot, "logs", "live", "state.json");
             var stateWriter = new StateFileWriter(statePath, stateFormatter);
             service.Attach(stateWriter);
@@ -59,6 +63,19 @@ namespace EasySave.GUI
             return File.Exists(Path.Combine(fiveUp, "EasySave.slnx")) ? fiveUp
                 : File.Exists(Path.Combine(fourUp, "EasySave.slnx")) ? fourUp
                 : Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, ".."));
+        }
+
+        private static ILogWriter CreateLogWriter(AppSettings settings, string logDir, ILogFormatter formatter)
+        {
+            var localLogger = new EasyLogger(logDir, formatter);
+            var remoteLogger = new SocketLogWriter(settings.LogServerHost, settings.LogServerPort, formatter);
+
+            return settings.LogTarget switch
+            {
+                LogTarget.Centralized => remoteLogger,
+                LogTarget.LocalAndCentralized => new CompositeLogWriter(new ILogWriter[] { localLogger, remoteLogger }),
+                _ => localLogger
+            };
         }
     }
 }

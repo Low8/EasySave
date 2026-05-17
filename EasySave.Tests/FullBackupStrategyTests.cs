@@ -23,13 +23,13 @@ public class FullBackupStrategyTests : IDisposable
     }
 
     [Fact]
-    public void Execute_AlwaysCopiesFile()
+    public async Task Execute_AlwaysCopiesFile()
     {
         // Arrange
         File.WriteAllText(_sourceFile, "content");
 
         // Act
-        var copied = _strategy.Execute(_sourceFile, _destFile);
+        var copied = await _strategy.Execute(_sourceFile, _destFile, CancellationToken.None);
 
         // Assert
         Assert.True(copied);
@@ -38,14 +38,14 @@ public class FullBackupStrategyTests : IDisposable
     }
 
     [Fact]
-    public void Execute_OverwritesExistingFile()
+    public async Task Execute_OverwritesExistingFile()
     {
         // Arrange
         File.WriteAllText(_sourceFile, "new content");
         File.WriteAllText(_destFile,   "old content");
 
         // Act
-        _strategy.Execute(_sourceFile, _destFile);
+        await _strategy.Execute(_sourceFile, _destFile, CancellationToken.None);
 
         // Assert
         Assert.Equal("new content", File.ReadAllText(_destFile));

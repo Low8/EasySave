@@ -11,7 +11,7 @@ namespace EasySave.GUI.ViewModels
     {
         private readonly IAppSettingsRepository _repo;
         private readonly Action<string> _changeLanguage;
-        private readonly Action<LogFormat> _applyLogFormat;
+        private readonly Action<AppSettings> _applySettings;
         private AppSettings _settings;
         private ILocalizationService _loc;
         private string _selectedLanguage;
@@ -21,12 +21,23 @@ namespace EasySave.GUI.ViewModels
         private string _newEncryptedExtension;
         private string _selectedEncryptedExtension;
         private RelayCommand _removeEncryptedExtensionCommand;
+        private string _newPriorityExtension;
+        private string _selectedPriorityExtension;
+        private RelayCommand _removePriorityExtensionCommand;
         private string _statusMessage;
+
+        public ObservableCollection<KeyValuePair<LogTarget, string>> LogTargetOptions { get; } = new();
 
         public LogFormat LogFormat
         {
             get => _settings.LogFormat;
             set { _settings.LogFormat = value; OnPropertyChanged(); }
+        }
+
+        public LogTarget LogTarget
+        {
+            get => _settings.LogTarget;
+            set { _settings.LogTarget = value; OnPropertyChanged(); }
         }
 
         public IReadOnlyList<LogFormat> LogFormats { get; } =
@@ -61,6 +72,19 @@ namespace EasySave.GUI.ViewModels
 
         public ObservableCollection<string> EncryptedExtensions { get; } = new();
 
+        public ObservableCollection<string> PriorityExtensions { get; } = new();
+
+        public long MaxFileSizeForParallelTransferKb
+        {
+            get => _settings.MaxFileSizeForParallelTransferKb;
+            set
+            {
+                if (value < 0) value = 0;
+                _settings.MaxFileSizeForParallelTransferKb = value;
+                OnPropertyChanged();
+            }
+        }
+
         public string NewEncryptedExtension
         {
             get => _newEncryptedExtension;
@@ -77,6 +101,22 @@ namespace EasySave.GUI.ViewModels
             }
         }
 
+        public string NewPriorityExtension
+        {
+            get => _newPriorityExtension;
+            set => SetProperty(ref _newPriorityExtension, value);
+        }
+
+        public string SelectedPriorityExtension
+        {
+            get => _selectedPriorityExtension;
+            set
+            {
+                if (SetProperty(ref _selectedPriorityExtension, value))
+                    _removePriorityExtensionCommand?.RaiseCanExecuteChanged();
+            }
+        }
+
         public string StatusMessage
         {
             get => _statusMessage;
@@ -84,8 +124,11 @@ namespace EasySave.GUI.ViewModels
         }
 
         public string SettingsLanguageText     => _loc.Get("settings_language");
+        public string SettingsLogTargetText    => _loc.Get("settings_log_target");
         public string SettingsBusinessSoftText => _loc.Get("settings_business_software");
         public string SettingsEncryptedExtText => _loc.Get("settings_encrypted_extensions");
+        public string SettingsPriorityExtText => _loc.Get("settings_priority_extensions");
+        public string SettingsMaxParallelKbText => _loc.Get("settings_max_parallel_kb");
         public string ButtonAddText            => _loc.Get("button_add");
         public string ButtonRemoveText         => _loc.Get("button_remove");
         public string ButtonApplyText          => _loc.Get("button_apply");
@@ -95,20 +138,24 @@ namespace EasySave.GUI.ViewModels
         public ICommand RemoveBusinessSoftwareCommand => _removeBusinessSoftwareCommand;
         public ICommand AddEncryptedExtensionCommand { get; }
         public ICommand RemoveEncryptedExtensionCommand => _removeEncryptedExtensionCommand;
+        public ICommand AddPriorityExtensionCommand { get; }
+        public ICommand RemovePriorityExtensionCommand => _removePriorityExtensionCommand;
 
         public SettingsViewModel(
             ILocalizationService loc,
             IAppSettingsRepository repo,
             Action<string> changeLanguage,
-            Action<LogFormat> applyLogFormat)
+            Action<AppSettings> applySettings)
         {
             _loc = loc;
             _repo = repo;
             _changeLanguage = changeLanguage;
-            _applyLogFormat = applyLogFormat;
+            _applySettings = applySettings;
             _settings = repo.Load();
             _selectedLanguage = string.IsNullOrWhiteSpace(_settings.Language) ? "fr" : _settings.Language;
             _settings.Language = _selectedLanguage;
+
+            UpdateLogTargetOptions();
 
             foreach (var name in _settings.BusinessSoftwareNames)
                 BusinessSoftwareNames.Add(name);
@@ -116,12 +163,16 @@ namespace EasySave.GUI.ViewModels
             foreach (var ext in _settings.EncryptedExtensions)
                 EncryptedExtensions.Add(ext);
 
+            foreach (var ext in _settings.PriorityExtensions)
+                PriorityExtensions.Add(ext);
+
             SaveCommand = new RelayCommand(() =>
             {
                 SyncBusinessSoftwareNames();
                 SyncEncryptedExtensions();
+                SyncPriorityExtensions();
                 _repo.Save(_settings);
-                _applyLogFormat?.Invoke(_settings.LogFormat);
+                _applySettings?.Invoke(_settings);
                 _changeLanguage?.Invoke(SelectedLanguage);
                 StatusMessage = _loc.Get("status_applied");
             });
@@ -133,17 +184,25 @@ namespace EasySave.GUI.ViewModels
             AddEncryptedExtensionCommand = new RelayCommand(AddEncryptedExtension);
             _removeEncryptedExtensionCommand = new RelayCommand(RemoveEncryptedExtension, () =>
                 !string.IsNullOrWhiteSpace(SelectedEncryptedExtension));
+
+            AddPriorityExtensionCommand = new RelayCommand(AddPriorityExtension);
+            _removePriorityExtensionCommand = new RelayCommand(RemovePriorityExtension, () =>
+                !string.IsNullOrWhiteSpace(SelectedPriorityExtension));
         }
 
         public void RefreshLocalization(ILocalizationService loc)
         {
             _loc = loc;
             OnPropertyChanged(nameof(SettingsLanguageText));
+            OnPropertyChanged(nameof(SettingsLogTargetText));
             OnPropertyChanged(nameof(SettingsBusinessSoftText));
             OnPropertyChanged(nameof(SettingsEncryptedExtText));
+            OnPropertyChanged(nameof(SettingsPriorityExtText));
+            OnPropertyChanged(nameof(SettingsMaxParallelKbText));
             OnPropertyChanged(nameof(ButtonAddText));
             OnPropertyChanged(nameof(ButtonRemoveText));
             OnPropertyChanged(nameof(ButtonApplyText));
+            UpdateLogTargetOptions();
         }
 
         private void AddBusinessSoftware()
@@ -191,10 +250,44 @@ namespace EasySave.GUI.ViewModels
             StatusMessage = _loc.Get("status_removed");
         }
 
+        private void AddPriorityExtension()
+        {
+            if (string.IsNullOrWhiteSpace(NewPriorityExtension)) return;
+            var ext = NewPriorityExtension.Trim().ToLowerInvariant();
+            if (!ext.StartsWith(".")) ext = "." + ext;
+            if (PriorityExtensions.Contains(ext)) return;
+            PriorityExtensions.Add(ext);
+            NewPriorityExtension = string.Empty;
+            SyncPriorityExtensions();
+            _removePriorityExtensionCommand?.RaiseCanExecuteChanged();
+            StatusMessage = _loc.Get("status_added");
+        }
+
+        private void RemovePriorityExtension()
+        {
+            if (string.IsNullOrWhiteSpace(SelectedPriorityExtension)) return;
+            PriorityExtensions.Remove(SelectedPriorityExtension);
+            SelectedPriorityExtension = null;
+            SyncPriorityExtensions();
+            _removePriorityExtensionCommand?.RaiseCanExecuteChanged();
+            StatusMessage = _loc.Get("status_removed");
+        }
+
         private void SyncBusinessSoftwareNames() =>
             _settings.BusinessSoftwareNames = BusinessSoftwareNames.ToList();
 
         private void SyncEncryptedExtensions() =>
             _settings.EncryptedExtensions = EncryptedExtensions.ToList();
+
+        private void SyncPriorityExtensions() =>
+            _settings.PriorityExtensions = PriorityExtensions.ToList();
+        private void UpdateLogTargetOptions()
+        {
+            LogTargetOptions.Clear();
+            LogTargetOptions.Add(new KeyValuePair<LogTarget, string>(LogTarget.Local, _loc.Get("settings_log_target_local")));
+            LogTargetOptions.Add(new KeyValuePair<LogTarget, string>(LogTarget.Centralized, _loc.Get("settings_log_target_centralized")));
+            LogTargetOptions.Add(new KeyValuePair<LogTarget, string>(LogTarget.LocalAndCentralized, _loc.Get("settings_log_target_both")));
+            OnPropertyChanged(nameof(LogTargetOptions));
+        }
     }
 }

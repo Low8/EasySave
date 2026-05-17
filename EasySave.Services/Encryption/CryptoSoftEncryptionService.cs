@@ -4,9 +4,12 @@ namespace EasySave.Services.Encryption;
 
 public class CryptoSoftEncryptionService : IEncryptionService
 {
+    private static readonly SemaphoreSlim _cryptoSemaphore = new(1, 1);
+
     private readonly string _cryptoSoftPath;
     private readonly string _encryptionKey;
     private readonly IReadOnlySet<string> _encryptedExtensions;
+    private readonly Func<ProcessStartInfo, (int ExitCode, long ElapsedMs)?>? _processRunner;
 
     public CryptoSoftEncryptionService(
         string cryptoSoftPath,
@@ -17,6 +20,17 @@ public class CryptoSoftEncryptionService : IEncryptionService
         _encryptionKey = encryptionKey;
         _encryptedExtensions = new HashSet<string>(
             encryptedExtensions.Select(e => e.ToLowerInvariant()));
+    }
+
+    // Test-friendly overload allowing injection of a process runner delegate.
+    public CryptoSoftEncryptionService(
+        string cryptoSoftPath,
+        string encryptionKey,
+        IEnumerable<string> encryptedExtensions,
+        Func<ProcessStartInfo, (int ExitCode, long ElapsedMs)?>? processRunner)
+        : this(cryptoSoftPath, encryptionKey, encryptedExtensions)
+    {
+        _processRunner = processRunner;
     }
 
     public bool ShouldEncrypt(string filePath)
@@ -30,18 +44,25 @@ public class CryptoSoftEncryptionService : IEncryptionService
     {
         if (!ShouldEncrypt(filePath)) return (true, 0);
         if (!File.Exists(_cryptoSoftPath)) return (false, 0);
+        var psi = BuildPsi(filePath);
+
+        if (_processRunner != null)
+        {
+            try
+            {
+                var result = _processRunner(psi);
+                if (result is null) return (false, -1);
+                return (result.Value.ExitCode == 0, result.Value.ElapsedMs);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"[CryptoSoft] Error in process runner for '{filePath}': {ex.Message}");
+                return (false, 0);
+            }
+        }
 
         try
         {
-            var psi = new ProcessStartInfo
-            {
-                FileName = _cryptoSoftPath,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            psi.ArgumentList.Add(filePath);
-            psi.ArgumentList.Add(_encryptionKey);
-
             var sw = Stopwatch.StartNew();
             using var process = Process.Start(psi);
             if (process is null) { sw.Stop(); return (false, 0); }
@@ -49,12 +70,79 @@ public class CryptoSoftEncryptionService : IEncryptionService
             process.WaitForExit();
             sw.Stop();
 
-            return (Success: process.ExitCode == 0, EncryptionMs: sw.ElapsedMilliseconds);
+            return (Success: process.ExitCode >= 0, EncryptionMs: sw.ElapsedMilliseconds);
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"[CryptoSoft] Error encrypting '{filePath}': {ex.Message}");
             return (false, 0);
         }
+    }
+
+    public async Task<(bool Success, long EncryptionMs)> EncryptAsync(string filePath, CancellationToken ct)
+    {
+        if (!ShouldEncrypt(filePath)) return (true, 0);
+        if (!File.Exists(_cryptoSoftPath)) return (false, -1);
+        var psi = BuildPsi(filePath);
+
+        if (_processRunner != null)
+        {
+            try
+            {
+                var result = _processRunner(psi);
+                if (result is null) return (false, 0);
+                return (result.Value.ExitCode == 0, result.Value.ElapsedMs);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"[CryptoSoft] Error in process runner for '{filePath}': {ex.Message}");
+                return (false, -1);
+            }
+        }
+
+        await _cryptoSemaphore.WaitAsync(ct);
+        try
+        {
+            using var process = Process.Start(psi);
+            if (process is null) return (false, -1);
+
+            try
+            {
+                await process.WaitForExitAsync(ct);
+            }
+            catch (OperationCanceledException)
+            {
+                process.Kill();
+                throw;
+            }
+
+            return (process.ExitCode >= 0, process.ExitCode >= 0 ? process.ExitCode : -1);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[CryptoSoft] Error encrypting '{filePath}': {ex.Message}");
+            return (false, -1);
+        }
+        finally
+        {
+            _cryptoSemaphore.Release();
+        }
+    }
+
+    private ProcessStartInfo BuildPsi(string filePath)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = _cryptoSoftPath,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        psi.ArgumentList.Add(filePath);
+        psi.ArgumentList.Add(_encryptionKey);
+        return psi;
     }
 }
