@@ -166,8 +166,6 @@ public class BackupService : IStateSubject
                         lastProgressNotify = DateTime.Now;
                         Notify(progressState);
                     }
-                    File.AppendAllText("/tmp/perf.log", $"[Perf] {result.SourcePath} | {result.TransferMs}ms | {DateTime.Now:HH:mm:ss.fff}\n");
-
                     if (_guard.IsRunning())
                     {
                         Console.Error.WriteLine($"[BackupService] Job '{config.Name}' paused: business software detected.");
@@ -291,6 +289,7 @@ public class BackupService : IStateSubject
     }
 
     public bool IsJobRunning(int index) => _stopCtsSources.ContainsKey(index);
+    public bool IsGuardRunning() => _guard.IsRunning();
 
     public void StopJob(int index)
     {

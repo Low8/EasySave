@@ -232,8 +232,10 @@ namespace EasySave.GUI.ViewModels
 
             SelectedJobs.CollectionChanged += (_, _) => UpdateCommandStates();
 
-            _runSelectedCommand    = new RelayCommand(RunSelected,    () => SelectedJobs.Any(j => j.Status is BackupStatus.Idle or BackupStatus.Completed or BackupStatus.Interrupted));
-            _runAllCommand         = new RelayCommand(RunAll,         () => !Jobs.Any(j => j.Status is BackupStatus.Running or BackupStatus.Paused)
+            _runSelectedCommand    = new RelayCommand(RunSelected,    () => !_service.IsGuardRunning()
+                                                                             && SelectedJobs.Any(j => j.Status is BackupStatus.Idle or BackupStatus.Completed or BackupStatus.Interrupted));
+            _runAllCommand         = new RelayCommand(RunAll,         () => !_service.IsGuardRunning()
+                                                                             && !Jobs.Any(j => j.Status is BackupStatus.Running or BackupStatus.Paused)
                                                                              && Jobs.Any(j => j.Status is BackupStatus.Idle or BackupStatus.Completed or BackupStatus.Interrupted));
             _pauseSelectedCommand  = new RelayCommand(PauseSelected,  () => SelectedJobs.Any(j => j.Status == BackupStatus.Running));
             _resumeSelectedCommand = new RelayCommand(ResumeSelected, () => SelectedJobs.Any(j => j.Status == BackupStatus.Paused));

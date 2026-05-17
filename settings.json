@@ -1,19 +1,22 @@
 {
   "LogFormat": "Json",
-  "LogTarget": "Centralized",
+  "LogTarget": "Local",
   "LogServerHost": "127.0.0.1",
   "LogServerPort": 8080,
-  "Language": "fr",
+  "Language": "en",
   "CryptoSoftPath": "tools\\CryptoSoft.exe",
   "EncryptionKey": "easysave",
   "EncryptedExtensions": [
     ".pdf",
-    ".jpg"
+    ".jpg",
+    ".json"
   ],
   "BusinessSoftwareNames": [
     "CalculatorApp.exe",
-    "qsdgf"
+    "qsdgf",
+    "Notepad.exe"
   ],
   "PriorityExtensions": [],
-  "MaxFileSizeForParallelTransferKb": 1000
+  "MaxFileSizeForParallelTransferKb": 1000,
+  "MaxParallelDegree": 3
 }

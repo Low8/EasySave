@@ -16,4 +16,8 @@
     <ProjectReference Include="..\EasySave.Services\EasySave.Services.csproj" />
   </ItemGroup>
 
+  <Target Name="PublishCryptoSoft" AfterTargets="Build">
+    <Exec Command="dotnet publish &quot;$(MSBuildProjectDirectory)\..\CryptoSoft\CryptoSoft.csproj&quot; -c $(Configuration) -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o &quot;$(MSBuildProjectDirectory)\..\tools\&quot;" />
+  </Target>
+
 </Project>
