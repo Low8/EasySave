@@ -2,11 +2,11 @@ using EasySave.Services.Interfaces;
 
 namespace EasySave.Services;
 
-public class FullBackupStrategy : IBackupStrategy 
+public class FullBackupStrategy : IBackupStrategy
 {
-    public bool Execute(string sourceFile, string destFile)
+    public async Task<bool> Execute(string sourceFile, string destFile, CancellationToken ct)
     {
-        File.Copy(sourceFile, destFile, overwrite: true);
-        return true; 
+        await PausableFileCopy.Copy(sourceFile, destFile, ct);
+        return true;
     }
 }

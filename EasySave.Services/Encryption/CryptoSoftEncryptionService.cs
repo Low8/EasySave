@@ -44,22 +44,14 @@ public class CryptoSoftEncryptionService : IEncryptionService
     {
         if (!ShouldEncrypt(filePath)) return (true, 0);
         if (!File.Exists(_cryptoSoftPath)) return (false, 0);
-        var psi = new ProcessStartInfo
-        {
-            FileName = _cryptoSoftPath,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-        psi.ArgumentList.Add(filePath);
-        psi.ArgumentList.Add(_encryptionKey);
+        var psi = BuildPsi(filePath);
 
-        // If a test-supplied runner exists, use it to avoid launching real processes.
         if (_processRunner != null)
         {
             try
             {
                 var result = _processRunner(psi);
-                if (result is null) return (false, 0);
+                if (result is null) return (false, -1);
                 return (result.Value.ExitCode == 0, result.Value.ElapsedMs);
             }
             catch (Exception ex)
@@ -91,22 +83,15 @@ public class CryptoSoftEncryptionService : IEncryptionService
     {
         if (!ShouldEncrypt(filePath)) return (true, 0);
         if (!File.Exists(_cryptoSoftPath)) return (false, -1);
-        var psi = new ProcessStartInfo
-        {
-            FileName = _cryptoSoftPath,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-        psi.ArgumentList.Add(filePath);
-        psi.ArgumentList.Add(_encryptionKey);
+        var psi = BuildPsi(filePath);
 
         if (_processRunner != null)
         {
             try
             {
                 var result = _processRunner(psi);
-                if (result is null) return (false, -1);
-                return (result.Value.ExitCode == 0, result.Value.ExitCode == 0 ? result.Value.ElapsedMs : -1);
+                if (result is null) return (false, 0);
+                return (result.Value.ExitCode == 0, result.Value.ElapsedMs);
             }
             catch (Exception ex)
             {
@@ -146,5 +131,18 @@ public class CryptoSoftEncryptionService : IEncryptionService
         {
             _cryptoSemaphore.Release();
         }
+    }
+
+    private ProcessStartInfo BuildPsi(string filePath)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = _cryptoSoftPath,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        psi.ArgumentList.Add(filePath);
+        psi.ArgumentList.Add(_encryptionKey);
+        return psi;
     }
 }

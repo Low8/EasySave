@@ -133,10 +133,37 @@
     <value>Supprimer un job</value>
   </data>
   <data name="menu_run" xml:space="preserve">
-    <value>Exécuter un job</value>
+    <value>Exécuter job(s) sélectionné(s)</value>
   </data>
   <data name="menu_run_all" xml:space="preserve">
     <value>Exécuter tous les jobs</value>
+  </data>
+  <data name="menu_pause" xml:space="preserve">
+    <value>Pause jobs</value>
+  </data>
+  <data name="menu_resume" xml:space="preserve">
+    <value>Reprendre jobs</value>
+  </data>
+  <data name="menu_stop" xml:space="preserve">
+    <value>Arrêter jobs</value>
+  </data>
+  <data name="menu_pause_all" xml:space="preserve">
+    <value>Pause tous les jobs</value>
+  </data>
+  <data name="menu_resume_all" xml:space="preserve">
+    <value>Reprendre tous les jobs</value>
+  </data>
+  <data name="menu_stop_all" xml:space="preserve">
+    <value>Arrêter tous les jobs</value>
+  </data>
+  <data name="menu_selected_jobs" xml:space="preserve">
+    <value>Jobs sélectionnés</value>
+  </data>
+  <data name="menu_all_jobs" xml:space="preserve">
+    <value>Tous les jobs</value>
+  </data>
+  <data name="status_blocked" xml:space="preserve">
+    <value>bloqué</value>
   </data>
   <data name="menu_quit" xml:space="preserve">
     <value>Quitter</value>
@@ -209,6 +236,12 @@
   </data>
   <data name="settings_encrypted_extensions" xml:space="preserve">
     <value>Extensions chiffrées (ex : .txt)</value>
+  </data>
+  <data name="settings_priority_extensions" xml:space="preserve">
+    <value>Extensions prioritaires (ex : .docx)</value>
+  </data>
+  <data name="settings_max_parallel_kb" xml:space="preserve">
+    <value>Taille max en transfert parallèle (KB)</value>
   </data>
   <data name="button_add" xml:space="preserve">
     <value>Ajouter</value>
