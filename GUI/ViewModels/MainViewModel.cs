@@ -254,15 +254,11 @@ namespace EasySave.GUI.ViewModels
         {
             _service.Detach(this);
 
-            ILogFormatter formatter = settings.LogFormat == LogFormat.Json
-                ? new JsonLogFormatter()
-                : new XmlLogFormatter();
+            IStateFormatter stateFormatter = settings.LogFormat == LogFormat.Xml
+                ? new XmlStateFormatter()
+                : new JsonStateFormatter();
 
-            IStateFormatter stateFormatter = settings.LogFormat == LogFormat.Json
-                ? new JsonStateFormatter()
-                : new XmlStateFormatter();
-
-            var logger = CreateLogWriter(settings, formatter);
+            var logger = CreateLogWriter(settings);
             var encryptionService = CreateEncryptionService(settings);
             var guard = CreateBusinessSoftwareGuard(settings);
             var transferCoordinator = new TransferCoordinator(() => _settingsRepo.Load());
@@ -283,10 +279,19 @@ namespace EasySave.GUI.ViewModels
             StatusMessage = _loc.Get("menu_settings") + " " + _loc.Get("status_done");
         }
 
-        private ILogWriter CreateLogWriter(AppSettings settings, ILogFormatter formatter)
+        private ILogWriter CreateLogWriter(AppSettings settings)
         {
-            var localLogger = new EasyLogger(_logDir, formatter);
-            var remoteLogger = new SocketLogWriter(settings.LogServerHost, settings.LogServerPort, formatter);
+            ILogWriter localLogger = settings.LogFormat switch
+            {
+                LogFormat.Xml => new EasyLogger(_logDir, new XmlLogFormatter()),
+                LogFormat.JsonAndXml => new CompositeLogWriter(new ILogWriter[]
+                {
+                    new EasyLogger(_logDir, new JsonLogFormatter()),
+                    new EasyLogger(_logDir, new XmlLogFormatter())
+                }),
+                _ => new EasyLogger(_logDir, new JsonLogFormatter())
+            };
+            var remoteLogger = new SocketLogWriter(settings.LogServerHost, settings.LogServerPort, new JsonLogFormatter());
 
             return settings.LogTarget switch
             {

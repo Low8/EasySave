@@ -41,7 +41,7 @@ public class CryptoSoftEncryptionService : IEncryptionService
     public (bool Success, long EncryptionMs) Encrypt(string filePath)
     {
         if (!ShouldEncrypt(filePath)) return (true, 0);
-        if (!File.Exists(_cryptoSoftPath)) return (false, 0);
+        if (!File.Exists(_cryptoSoftPath)) return (false, -1);
         var psi = BuildPsi(filePath);
 
         if (_processRunner != null)
@@ -49,13 +49,13 @@ public class CryptoSoftEncryptionService : IEncryptionService
             try
             {
                 var result = _processRunner(psi);
-                if (result is null) return (false, 0);
-                return (result.Value.ExitCode == 0, result.Value.ElapsedMs);
+                if (result is null) return (false, -1);
+                return (result.Value.ExitCode == 0, result.Value.ExitCode == 0 ? result.Value.ElapsedMs : -1);
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"[CryptoSoft] Error in process runner for '{filePath}': {ex.Message}");
-                return (false, 0);
+                return (false, -1);
             }
         }
 
@@ -63,24 +63,24 @@ public class CryptoSoftEncryptionService : IEncryptionService
         {
             var sw = Stopwatch.StartNew();
             using var process = Process.Start(psi);
-            if (process is null) { sw.Stop(); return (false, 0); }
+            if (process is null) { sw.Stop(); return (false, -1); }
 
             process.WaitForExit();
             sw.Stop();
 
-            return (Success: process.ExitCode == 0, EncryptionMs: sw.ElapsedMilliseconds);
+            return (process.ExitCode == 0, process.ExitCode == 0 ? sw.ElapsedMilliseconds : -1);
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"[CryptoSoft] Error encrypting '{filePath}': {ex.Message}");
-            return (false, 0);
+            return (false, -1);
         }
     }
 
     public async Task<(bool Success, long EncryptionMs)> EncryptAsync(string filePath, CancellationToken ct)
     {
         if (!ShouldEncrypt(filePath)) return (true, 0);
-        if (!File.Exists(_cryptoSoftPath)) return (false, 0);
+        if (!File.Exists(_cryptoSoftPath)) return (false, -1);
         var psi = BuildPsi(filePath);
 
         if (_processRunner != null)
@@ -88,13 +88,13 @@ public class CryptoSoftEncryptionService : IEncryptionService
             try
             {
                 var result = _processRunner(psi);
-                if (result is null) return (false, 0);
-                return (result.Value.ExitCode == 0, result.Value.ElapsedMs);
+                if (result is null) return (false, -1);
+                return (result.Value.ExitCode == 0, result.Value.ExitCode == 0 ? result.Value.ElapsedMs : -1);
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"[CryptoSoft] Error in process runner for '{filePath}': {ex.Message}");
-                return (false, 0);
+                return (false, -1);
             }
         }
 
@@ -102,7 +102,7 @@ public class CryptoSoftEncryptionService : IEncryptionService
         {
             var sw = Stopwatch.StartNew();
             using var process = Process.Start(psi);
-            if (process is null) { sw.Stop(); return (false, 0); }
+            if (process is null) { sw.Stop(); return (false, -1); }
 
             try
             {
@@ -115,7 +115,7 @@ public class CryptoSoftEncryptionService : IEncryptionService
             }
             sw.Stop();
 
-            return (Success: process.ExitCode == 0, EncryptionMs: sw.ElapsedMilliseconds);
+            return (process.ExitCode == 0, process.ExitCode == 0 ? sw.ElapsedMilliseconds : -1);
         }
         catch (OperationCanceledException)
         {
@@ -124,7 +124,7 @@ public class CryptoSoftEncryptionService : IEncryptionService
         catch (Exception ex)
         {
             Console.Error.WriteLine($"[CryptoSoft] Error encrypting '{filePath}': {ex.Message}");
-            return (false, 0);
+            return (false, -1);
         }
     }
 
