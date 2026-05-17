@@ -72,6 +72,13 @@ public class BackupJob
                             var relativePath = Path.GetRelativePath(_config.SourceDir, sourceFile);
                             var destFile = Path.Combine(_config.TargetDir, relativePath);
 
+                            if (string.Equals(sourceFile, destFile, StringComparison.OrdinalIgnoreCase))
+                            {
+                                await channel.Writer.WriteAsync(
+                                    new BackupResult(sourceFile, destFile, 0, -1, false, false, 0), ct);
+                                continue;
+                            }
+
                             var dir = Path.GetDirectoryName(destFile);
                             if (dir != null && !Directory.Exists(dir))
                             {

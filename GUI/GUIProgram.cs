@@ -30,11 +30,14 @@ namespace EasySave.GUI
                 : new XmlStateFormatter();
             var logDir = Path.Combine(solutionRoot, "logs", "daily");
             var logger = CreateLogWriter(settings, logDir, formatter);
+            var cryptoSoftPath = Path.IsPathRooted(settings.CryptoSoftPath)
+                ? settings.CryptoSoftPath
+                : Path.Combine(solutionRoot, settings.CryptoSoftPath);
             IEncryptionService encryptionService =
                 !string.IsNullOrWhiteSpace(settings.CryptoSoftPath)
                 && settings.EncryptedExtensions.Count > 0
                     ? new CryptoSoftEncryptionService(
-                        settings.CryptoSoftPath,
+                        cryptoSoftPath,
                         settings.EncryptionKey,
                         settings.EncryptedExtensions)
                     : new NoEncryptionService();
