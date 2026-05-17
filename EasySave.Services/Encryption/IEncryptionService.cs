@@ -8,6 +8,8 @@ public interface IEncryptionService
     /// </summary>
     (bool Success, long EncryptionMs) Encrypt(string filePath);
 
+    Task<(bool Success, long EncryptionMs)> EncryptAsync(string filePath, CancellationToken ct);
+
     /// <summary>
     /// Returns true if the file extension should be encrypted.
     /// </summary>

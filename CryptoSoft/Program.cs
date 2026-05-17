@@ -16,11 +16,6 @@ public static class Program
 
         try
         {
-            foreach (var arg in args)
-            {
-                Console.WriteLine(arg);
-            }
-
             var fileManager = new FileManager(args[0], args[1]);
             int elapsedTime = fileManager.TransformFile();
             Environment.Exit(elapsedTime);

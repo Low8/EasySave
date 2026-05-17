@@ -16,7 +16,6 @@ public class FileManager(string path, string key)
             return true;
 
         Console.WriteLine("File not found.");
-        Thread.Sleep(1000);
         return false;
     }
 
