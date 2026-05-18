@@ -1,8 +1,8 @@
-# Release v3.0 — Documentation technique
+# Release v3.0 — Technical documentation
 
-## Diagramme de classes
+## Class diagram
 
-Le diagramme suivant représente l'architecture complète d'EasySave v3.0, organisée autour du patron Observateur entre `BackupService` et ses abonnés, et du patron Stratégie pour les modes de sauvegarde et de chiffrement.
+The following diagram represents the complete architecture of EasySave v3.0, organized around the Observer pattern between `BackupService` and its subscribers, and the Strategy pattern for backup and encryption modes.
 
 ```mermaid
 classDiagram
@@ -454,28 +454,28 @@ classDiagram
       LogServerProgram ..> LogServer
 ```
 
-## Diagramme de cas d'utilisation
+## Use case diagram
 
-Le diagramme ci-dessous recense les interactions entre l'utilisateur et le système EasySave. Les cas d'utilisation système sont déclenchés automatiquement lors de l'exécution d'une tâche de sauvegarde.
+The diagram below lists the interactions between the user and the EasySave system. System use cases are triggered automatically during the execution of a backup job.
 
 ```mermaid
 graph LR
-    User(["👤 Utilisateur"])
-    Sys(["⚙️ Système"])
+    User(["👤 User"])
+    Sys(["⚙️ System"])
 
-    subgraph Utilisateur
-        UC1["Configurer les tâches\n(ajouter, modifier, supprimer)"]
-        UC2["Exécuter une ou toutes les tâches"]
-        UC3["Pause / Reprendre / Arrêter une tâche"]
-        UC4["Configurer les paramètres\n(format log, langue, extensions,\nlogiciels métier, priorités)"]
+    subgraph User actions
+        UC1["Configure jobs\n(add, edit, delete)"]
+        UC2["Run one or all jobs"]
+        UC3["Pause / Resume / Stop a job"]
+        UC4["Configure settings\n(log format, language, extensions,\nbusiness software, priorities)"]
     end
 
-    subgraph Système
-        UC5["Détecter le logiciel métier\net mettre en pause automatiquement"]
-        UC6["Chiffrer les fichiers via CryptoSoft"]
-        UC7["Écrire le journal quotidien\n(JSON ou XML)"]
-        UC8["Mettre à jour le fichier d'état\nen temps réel"]
-        UC9["Centraliser les logs\nvia serveur Docker"]
+    subgraph System actions
+        UC5["Detect business software\nand auto-pause"]
+        UC6["Encrypt files via CryptoSoft"]
+        UC7["Write daily log\n(JSON or XML)"]
+        UC8["Update state file\nin real time"]
+        UC9["Centralize logs\nvia Docker server"]
     end
 
     User --> UC1
@@ -487,19 +487,19 @@ graph LR
     Sys --> UC7
     Sys --> UC8
     Sys --> UC9
-    UC2 -.->|déclenche| UC6
-    UC2 -.->|déclenche| UC7
-    UC2 -.->|déclenche| UC8
-    UC5 -.->|interrompt| UC2
+    UC2 -.->|triggers| UC6
+    UC2 -.->|triggers| UC7
+    UC2 -.->|triggers| UC8
+    UC5 -.->|interrupts| UC2
 ```
 
-## Diagramme de séquence
+## Sequence diagram
 
-Ce diagramme décrit le cycle de vie complet d'une tâche de sauvegarde, de l'action utilisateur jusqu'à la notification de fin, en passant par la copie, le chiffrement et la journalisation. Les blocs `alt` et `opt` couvrent les cas de pause/reprise et d'arrêt.
+This diagram describes the complete lifecycle of a backup job, from the user action to the completion notification, including file copy, encryption and logging. The `alt` and `opt` blocks cover pause/resume and stop scenarios.
 
 ```mermaid
 sequenceDiagram
-    actor User as Utilisateur
+    actor User as User
     participant MVM as MainViewModel
     participant BS as BackupService
     participant BJ as BackupJob
@@ -510,16 +510,16 @@ sequenceDiagram
 
     User->>MVM: RunSelected()
     MVM->>BS: RunRange(indices, ct)
-    BS->>BS: Énumérer les fichiers source
+    BS->>BS: Enumerate source files
     BS->>BJ: Execute(ct)
 
-    loop Pour chaque fichier
+    loop For each file
         BJ->>PFC: Copy(sourceFile, destFile, ct)
-        PFC-->>BJ: Copie terminée
+        PFC-->>BJ: Copy complete
 
-        opt Chiffrement requis
+        opt Encryption required
             BJ->>CES: EncryptAsync(destFile, ct)
-            CES->>CES: Acquérir SemaphoreSlim
+            CES->>CES: Acquire SemaphoreSlim
             CES->>CES: Process.Start(CryptoSoft.exe)
             CES-->>BJ: (Success, EncryptionMs)
         end
@@ -527,15 +527,15 @@ sequenceDiagram
         BJ-->>BS: BackupResult
         BS->>EL: Log(LogEntry)
         BS->>SFW: Notify(BackupState.Running)
-        SFW->>SFW: Écrire state.json
+        SFW->>SFW: Write state.json
 
-        alt Logiciel métier détecté
+        alt Business software detected
             BS->>MVM: Notify(BackupState.Paused)
-            BS->>BS: Attendre fin du logiciel métier
+            BS->>BS: Wait for business software to close
             BS->>MVM: Notify(BackupState.Running)
         end
 
-        alt Pause utilisateur
+        alt User pause
             User->>MVM: PauseSelected()
             MVM->>BS: PauseJobs(indices)
             BS->>MVM: Notify(BackupState.Paused)
@@ -544,7 +544,7 @@ sequenceDiagram
             BS->>MVM: Notify(BackupState.Running)
         end
 
-        opt Arrêt demandé
+        opt Stop requested
             User->>MVM: StopSelected()
             MVM->>BS: StopJob(index)
             BS->>BS: CancellationTokenSource.Cancel()
@@ -552,47 +552,47 @@ sequenceDiagram
         end
     end
 
-    BS->>EL: Log(dernière entrée)
+    BS->>EL: Log(last entry)
     BS->>SFW: Notify(BackupState.Completed)
     BS->>MVM: Notify(BackupState.Completed)
-    MVM-->>User: Interface mise à jour
+    MVM-->>User: UI updated
 ```
 
-## Diagramme d'activité
+## Activity diagram
 
-Ce diagramme détaille le traitement interne d'un fichier individuel dans `BackupJob`, depuis la vérification de priorité jusqu'à l'écriture du résultat dans le canal de sortie. Les contrôles du logiciel métier et du flag de pause sont effectués après chaque fichier traité.
+This diagram details the internal processing of an individual file in `BackupJob`, from the priority check through to writing the result into the output channel. Business software and user pause flag checks are performed after each processed file.
 
 ```mermaid
 flowchart TD
-    Start([Début]) --> CheckSamePath{sourceFile == destFile ?}
-    CheckSamePath -- Oui --> WriteError[Écrire BackupResult\nTransferMs=-1, erreur]
-    CheckSamePath -- Non --> CheckPriority{Extension prioritaire ?}
-    CheckPriority -- Oui --> WaitNonPriority[Attendre la fin des\nfichiers non-prioritaires]
-    CheckPriority -- Non --> CheckSize
-    WaitNonPriority --> CheckSize{Fichier volumineux\nou MaxParallelDegree ?}
-    CheckSize -- Oui --> WaitCoordinator[Acquérir le sémaphore\nTransferCoordinator]
-    CheckSize -- Non --> Copy
-    WaitCoordinator --> Copy[Copier le fichier\nchunk par chunk\nPausableFileCopy]
-    Copy --> CopyOK{Copie réussie ?}
-    CopyOK -- Non --> WriteFailed[Écrire BackupResult\nTransferMs=-1, Success=false]
-    CopyOK -- Oui --> ReleaseCoord[Libérer TransferCoordinator]
+    Start([Start]) --> CheckSamePath{sourceFile == destFile ?}
+    CheckSamePath -- Yes --> WriteError[Write BackupResult\nTransferMs=-1, error]
+    CheckSamePath -- No --> CheckPriority{Priority extension ?}
+    CheckPriority -- Yes --> WaitNonPriority[Wait for all\npriority files to complete]
+    CheckPriority -- No --> CheckSize
+    WaitNonPriority --> CheckSize{Large file\nor MaxParallelDegree ?}
+    CheckSize -- Yes --> WaitCoordinator[Acquire semaphore\nTransferCoordinator]
+    CheckSize -- No --> Copy
+    WaitCoordinator --> Copy[Copy file\nchunk by chunk\nPausableFileCopy]
+    Copy --> CopyOK{Copy successful ?}
+    CopyOK -- No --> WriteFailed[Write BackupResult\nTransferMs=-1, Success=false]
+    CopyOK -- Yes --> ReleaseCoord[Release TransferCoordinator]
     ReleaseCoord --> CheckEncrypt{ShouldEncrypt\ndestFile ?}
-    CheckEncrypt -- Non --> ReadSize[Lire taille du fichier dest]
-    CheckEncrypt -- Oui --> Encrypt[EncryptAsync\nCryptoSoft.exe]
+    CheckEncrypt -- No --> ReadSize[Read dest file size]
+    CheckEncrypt -- Yes --> Encrypt[EncryptAsync\nCryptoSoft.exe]
     Encrypt --> EncryptOK{ExitCode >= 0 ?}
-    EncryptOK -- Non --> ReadSizeFail[Lire taille\nencryptionFailed=true]
-    EncryptOK -- Oui --> ReadSize
+    EncryptOK -- No --> ReadSizeFail[Read size\nencryptionFailed=true]
+    EncryptOK -- Yes --> ReadSize
     ReadSizeFail --> WriteResult
-    ReadSize --> WriteResult[Écrire BackupResult\ndans le canal]
+    ReadSize --> WriteResult[Write BackupResult\nto channel]
     WriteError --> CheckGuard
     WriteFailed --> CheckGuard
-    WriteResult --> CheckGuard{Logiciel métier\nactif ?}
-    CheckGuard -- Oui --> WaitGuard[Pause automatique\nAttendre arrêt du logiciel]
+    WriteResult --> CheckGuard{Business software\nrunning ?}
+    CheckGuard -- Yes --> WaitGuard[Auto-pause\nWait for software to close]
     WaitGuard --> CheckPause
-    CheckGuard -- Non --> CheckPause{Flag de pause\nutilisateur actif ?}
-    CheckPause -- Oui --> WaitResume[Attendre reprise\nTask.Delay 100ms en boucle]
+    CheckGuard -- No --> CheckPause{User pause\nflag active ?}
+    CheckPause -- Yes --> WaitResume[Wait for resume\nTask.Delay 100ms loop]
     WaitResume --> NextFile
-    CheckPause -- Non --> NextFile{Autre fichier\ndans le canal ?}
-    NextFile -- Oui --> CheckSamePath
-    NextFile -- Non --> End([Fin])
+    CheckPause -- No --> NextFile{Another file\nin channel ?}
+    NextFile -- Yes --> CheckSamePath
+    NextFile -- No --> End([End])
 ```
