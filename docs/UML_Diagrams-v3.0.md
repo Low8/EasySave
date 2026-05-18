@@ -1,4 +1,4 @@
-# Release v3.0 — Technical documentation
+# Release v3.0 — UML Diagrams
 
 ## Class diagram
 
